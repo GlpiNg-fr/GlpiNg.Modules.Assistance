@@ -1,0 +1,506 @@
+@page "/assistance/tickets/{TicketId:int}"
+@rendermode InteractiveServer
+
+<PageTitle>@(_ticket is null ? "Ticket" : $"#{_ticket.Id} {_ticket.Name}") — GlpiNg</PageTitle>
+
+@if (_ticket is null)
+{
+    <div class="card"><div class="card-body text-center text-secondary py-5">Ticket introuvable.</div></div>
+}
+else
+{
+    <div class="glpi-fiche">
+        <div class="glpi-fiche-header d-flex align-items-center justify-content-between">
+            <h2 class="mb-0">
+                <i class="ti @(_ticket.Type == TicketType.Incident ? "ti-alert-circle" : "ti-help-circle") me-2"></i>
+                <span class="text-secondary">#@_ticket.Id</span> @_ticket.Name
+                <span class="badge @TicketLabels.BadgeFor(_ticket.Status) ms-2">@TicketLabels.For(_ticket.Status)</span>
+                @if (_ticket.IsOverdue)
+                {
+                    <span class="badge bg-danger-lt ms-1">En retard</span>
+                }
+            </h2>
+            <div class="btn-list">
+                <a class="btn" href="/assistance/tickets"><i class="ti ti-arrow-left me-1"></i>Retour à la liste</a>
+
+                @* Les deux gestes du quotidien, hors du formulaire : résoudre, et rouvrir ce qui
+                   revient. Les enfouir dans la liste des statuts les rendrait invisibles. *@
+                @if (_ticket.IsOpen)
+                {
+                    <button type="button" class="btn btn-success" @onclick="@(() => _activeTab = "solution")">
+                        <i class="ti ti-check me-1"></i>Résoudre
+                    </button>
+                }
+                else
+                {
+                    <button type="button" class="btn" @onclick="ReopenAsync">
+                        <i class="ti ti-rotate-2 me-1"></i>Rouvrir
+                    </button>
+                }
+
+                <div class="dropdown">
+                    <button type="button" class="btn btn-icon text-danger" data-bs-toggle="dropdown" aria-expanded="false"
+                            title="Supprimer">
+                        <i class="ti ti-trash"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 280px;">
+                        <p class="mb-2">Supprimer ce ticket, ses suivis et ses tâches ? Cette action est définitive.</p>
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-sm">Annuler</button>
+                            <button type="button" class="btn btn-sm btn-danger" @onclick="DeleteAsync">Supprimer</button>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-warning" disabled="@_isSaving" @onclick="SaveAsync">
+                    <i class="ti ti-device-floppy me-1"></i>Enregistrer
+                </button>
+            </div>
+        </div>
+
+        <div class="glpi-fiche-layout">
+            <aside class="glpi-fiche-sidebar">
+                @foreach ((string key, string label, string icon, int? count) in Tabs)
+                {
+                    <button type="button" class="glpi-fiche-tab-item @(_activeTab == key ? "active" : "")"
+                            @onclick="() => _activeTab = key">
+                        <i class="ti @icon"></i>
+                        <span>@label</span>
+                        @if (count is { } value)
+                        {
+                            <span class="glpi-fiche-tab-count">@value</span>
+                        }
+                    </button>
+                }
+            </aside>
+
+            <div class="glpi-fiche-panel">
+                @switch (_activeTab)
+                {
+                    case "fiche":
+                        @if (_error is not null)
+                        {
+                            <div class="alert alert-danger">@_error</div>
+                        }
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="glpi-fiche-field">
+                                    <label>Titre<span class="text-danger ms-1">*</span></label>
+                                    <input class="form-control" @bind="_ticket.Name" />
+                                </div>
+                                <div class="glpi-fiche-field">
+                                    <label>Description</label>
+                                    <textarea class="form-control" rows="6" @bind="_ticket.Content"></textarea>
+                                </div>
+                                <div class="glpi-fiche-field">
+                                    <label>Type</label>
+                                    <select class="form-select" value="@((int)_ticket.Type)"
+                                            @onchange="@(e => _ticket.Type = (TicketType)int.Parse(e.Value?.ToString() ?? "1"))">
+                                        @foreach (TicketType type in Enum.GetValues<TicketType>())
+                                        {
+                                            <option value="@((int)type)">@TicketLabels.For(type)</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="glpi-fiche-field">
+                                    <label>Statut</label>
+                                    <select class="form-select" value="@((int)_ticket.Status)"
+                                            @onchange="OnStatusChanged">
+                                        @foreach (TicketStatus status in Enum.GetValues<TicketStatus>())
+                                        {
+                                            <option value="@((int)status)">@TicketLabels.For(status)</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="glpi-fiche-field">
+                                    <label>Catégorie</label>
+                                    <select class="form-select" @bind="_categoryId">
+                                        <option value="0">—</option>
+                                        @foreach (TicketCategory category in _categories)
+                                        {
+                                            <option value="@category.Id">@CategoryPath(category)</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="glpi-fiche-field">
+                                    <label>Demandeur</label>
+                                    <select class="form-select" @bind="_requesterId">
+                                        <option value="0">—</option>
+                                        @foreach (var user in _users)
+                                        {
+                                            <option value="@user.Id">@user.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="glpi-fiche-field">
+                                    <label>Demandeur externe</label>
+                                    <input class="form-control" placeholder="Si ce n'est pas un compte de l'application"
+                                           @bind="_ticket.RequesterName" />
+                                </div>
+                                <div class="glpi-fiche-field">
+                                    <label>Attribué au technicien</label>
+                                    <select class="form-select" @bind="_assignedUserId">
+                                        <option value="0">—</option>
+                                        @foreach (var user in _users)
+                                        {
+                                            <option value="@user.Id">@user.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="glpi-fiche-field">
+                                    <label>Attribué au groupe</label>
+                                    <select class="form-select" @bind="_assignedGroupId">
+                                        <option value="0">—</option>
+                                        @foreach (var group in _groups)
+                                        {
+                                            <option value="@group.Id">@group.Name</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <hr />
+
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="glpi-fiche-field">
+                                            <label>Urgence</label>
+                                            <select class="form-select" value="@((int)_ticket.Urgency)"
+                                                    @onchange="OnUrgencyChanged">
+                                                @foreach (ItilLevel level in Enum.GetValues<ItilLevel>())
+                                                {
+                                                    <option value="@((int)level)">@ItilLabels.For(level)</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="glpi-fiche-field">
+                                            <label>Impact</label>
+                                            <select class="form-select" value="@((int)_ticket.Impact)"
+                                                    @onchange="OnImpactChanged">
+                                                @foreach (ItilLevel level in Enum.GetValues<ItilLevel>())
+                                                {
+                                                    <option value="@((int)level)">@ItilLabels.For(level)</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="glpi-fiche-field">
+                                    <label>
+                                        Priorité
+                                        @if (!_ticket.IsPriorityManual)
+                                        {
+                                            <span class="text-secondary ms-1">(calculée)</span>
+                                        }
+                                    </label>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <select class="form-select" value="@((int)_ticket.Priority)"
+                                                @onchange="OnPriorityChanged">
+                                            @foreach (ItilLevel level in Enum.GetValues<ItilLevel>())
+                                            {
+                                                <option value="@((int)level)">@ItilLabels.For(level)</option>
+                                            }
+                                        </select>
+                                        @if (_ticket.IsPriorityManual)
+                                        {
+                                            <button type="button" class="btn btn-sm text-nowrap" @onclick="ResetPriority"
+                                                    title="Revenir à la priorité déduite de l'urgence et de l'impact">
+                                                <i class="ti ti-refresh me-1"></i>Recalculer
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                                @if (_ticket.IsPriorityManual)
+                                {
+                                    <p class="hint">
+                                        Forcée à la main : elle ne suivra plus l'urgence ni l'impact.
+                                    </p>
+                                }
+
+                                <div class="glpi-fiche-field">
+                                    <label>Échéance</label>
+                                    <input class="form-control" type="datetime-local" @bind="_ticket.DueDate" />
+                                </div>
+                                <div class="glpi-fiche-field">
+                                    <label>Ouvert le</label>
+                                    <input class="form-control" disabled
+                                           value="@_ticket.OpenedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")" />
+                                </div>
+                                @if (_ticket.SolvedAt is { } solved)
+                                {
+                                    <div class="glpi-fiche-field">
+                                        <label>Résolu le</label>
+                                        <input class="form-control" disabled
+                                               value="@solved.ToLocalTime().ToString("dd/MM/yyyy HH:mm")" />
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        break;
+
+                    case "suivis":
+                        <p class="text-secondary">
+                            Le fil des échanges sur ce ticket. Un suivi interne reste entre intervenants.
+                        </p>
+
+                        <div class="mb-3">
+                            <textarea class="form-control" rows="3" placeholder="Ajouter un suivi…"
+                                      @bind="_newFollowup" @bind:event="oninput"></textarea>
+                            <div class="d-flex align-items-center gap-3 mt-2">
+                                <button type="button" class="btn btn-primary"
+                                        disabled="@string.IsNullOrWhiteSpace(_newFollowup)" @onclick="AddFollowupAsync">
+                                    <i class="ti ti-plus me-1"></i>Ajouter
+                                </button>
+                                <label class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" checked="@_newFollowupPrivate"
+                                           @onchange="@((ChangeEventArgs e) => _newFollowupPrivate = (bool)(e.Value ?? false))" />
+                                    <span class="form-check-label">Suivi interne</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        @if (_followups.Count == 0)
+                        {
+                            <div class="glpi-config-placeholder">
+                                <i class="ti ti-message-off"></i>
+                                <p class="mb-0">Aucun suivi.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (ItilFollowup followup in _followups)
+                            {
+                                <div class="card mb-2 @(followup.IsPrivate ? "border-warning" : "")">
+                                    <div class="card-body">
+                                        <div style="white-space: pre-wrap;">@followup.Content</div>
+                                        <div class="d-flex align-items-center justify-content-between mt-2">
+                                            <div class="text-secondary small">
+                                                <i class="ti ti-user me-1"></i>@followup.AuthorName
+                                                <span class="ms-2">
+                                                    <i class="ti ti-calendar me-1"></i>@followup.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                                </span>
+                                                @if (followup.IsPrivate)
+                                                {
+                                                    <span class="badge bg-warning-lt ms-2">Interne</span>
+                                                }
+                                            </div>
+                                            <button type="button" class="btn btn-icon btn-sm text-danger" title="Supprimer"
+                                                    @onclick="() => DeleteFollowupAsync(followup.Id)">
+                                                <i class="ti ti-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        break;
+
+                    case "taches":
+                        <p class="text-secondary">
+                            Travaux à mener sur ce ticket. Une tâche se planifie et s'attribue, là où un
+                            suivi ne fait que raconter.
+                        </p>
+
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-5">
+                                        <label class="form-label">Tâche</label>
+                                        <input class="form-control" @bind="_newTask.Content" @bind:event="oninput" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Technicien</label>
+                                        <select class="form-select" @bind="_newTaskUserId">
+                                            <option value="0">—</option>
+                                            @foreach (var user in _users)
+                                            {
+                                                <option value="@user.Id">@user.Name</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Planifiée le</label>
+                                        <input class="form-control" type="datetime-local" @bind="_newTask.PlannedStart" />
+                                    </div>
+                                    <div class="col-md-1">
+                                        <button type="button" class="btn btn-primary w-100"
+                                                disabled="@string.IsNullOrWhiteSpace(_newTask.Content)" @onclick="AddTaskAsync">
+                                            <i class="ti ti-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (_tasks.Count == 0)
+                        {
+                            <div class="glpi-config-placeholder">
+                                <i class="ti ti-checklist"></i>
+                                <p class="mb-0">Aucune tâche.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-vcenter">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 3rem;"></th>
+                                            <th>Tâche</th>
+                                            <th>Technicien</th>
+                                            <th>Planifiée</th>
+                                            <th>Durée</th>
+                                            <th style="width: 3rem;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (ItilTask task in _tasks)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <input class="form-check-input m-0" type="checkbox"
+                                                           checked="@(task.State == ItilTaskState.Done)"
+                                                           @onchange="@((ChangeEventArgs e) => ToggleTaskAsync(task.Id, (bool)(e.Value ?? false)))" />
+                                                </td>
+                                                <td class="@(task.State == ItilTaskState.Done ? "text-secondary text-decoration-line-through" : "")">
+                                                    @task.Content
+                                                </td>
+                                                <td class="text-secondary">
+                                                    @(task.AssignedUserId is { } id ? NameOfUser(id) : "—")
+                                                </td>
+                                                <td class="text-secondary">
+                                                    @(task.PlannedStart?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "—")
+                                                </td>
+                                                <td class="text-secondary">
+                                                    @(task.DurationMinutes is { } minutes ? $"{minutes} min" : "—")
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-icon btn-sm text-danger" title="Supprimer"
+                                                            @onclick="() => DeleteTaskAsync(task.Id)">
+                                                        <i class="ti ti-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        break;
+
+                    case "solution":
+                        @if (_ticket.Status is TicketStatus.Solved or TicketStatus.Closed)
+                        {
+                            string solvedOn = _ticket.SolvedAt is { } date
+                                ? $" le {date.ToLocalTime():dd/MM/yyyy HH:mm}"
+                                : string.Empty;
+
+                            <div class="alert alert-success">
+                                Ticket @TicketLabels.For(_ticket.Status).ToLowerInvariant()@(solvedOn).
+                            </div>
+                        }
+
+                        <div class="glpi-fiche-field">
+                            <label>Type de solution</label>
+                            <input class="form-control" placeholder="Correctif, contournement, sans suite…"
+                                   @bind="_ticket.SolutionType" />
+                        </div>
+                        <div class="glpi-fiche-field">
+                            <label>Solution</label>
+                            <textarea class="form-control" rows="6" @bind="_ticket.Solution" @bind:event="oninput"></textarea>
+                        </div>
+
+                        @if (_ticket.IsOpen)
+                        {
+                            <button type="button" class="btn btn-success" disabled="@string.IsNullOrWhiteSpace(_ticket.Solution)"
+                                    @onclick="SolveAsync">
+                                <i class="ti ti-check me-1"></i>Marquer comme résolu
+                            </button>
+                            <p class="hint">
+                                Résoudre enregistre la solution, passe le ticket en « Résolu » et en date la
+                                résolution.
+                            </p>
+                        }
+                        else if (_ticket.Status == TicketStatus.Solved)
+                        {
+                            <button type="button" class="btn" @onclick="CloseAsync">
+                                <i class="ti ti-lock me-1"></i>Clore le ticket
+                            </button>
+                        }
+                        break;
+
+                    case "problemes":
+                        <p class="text-secondary">
+                            Problèmes dont cet incident est une manifestation. Le rattachement se
+                            fait depuis la fiche du problème, qui est l'écran de l'analyse.
+                        </p>
+
+                        @if (_problems.Count == 0)
+                        {
+                            <div class="glpi-config-placeholder">
+                                <i class="ti ti-bulb-off"></i>
+                                <p class="mb-0">Aucun problème rattaché.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-vcenter">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 5rem;">N°</th>
+                                            <th>Problème</th>
+                                            <th>Statut</th>
+                                            <th>Priorité</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (Problem problem in _problems)
+                                        {
+                                            <tr>
+                                                <td class="text-secondary">@problem.Id</td>
+                                                <td>
+                                                    <a href="@($"/assistance/problems/{problem.Id}")" class="text-reset fw-semibold">
+                                                        <i class="ti ti-bulb me-1 text-secondary"></i>@problem.Name
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    <span class="badge @ProblemLabels.BadgeFor(problem.Status)">
+                                                        @ProblemLabels.For(problem.Status)
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge @ItilLabels.BadgeFor(problem.Priority)">
+                                                        @ItilLabels.For(problem.Priority)
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        break;
+
+                    case "documents":
+                        <ItemDocumentsTab ItemType="@ItemTypes.Ticket" ItemId="TicketId" AuthorName="@_currentUserName"
+                                          CountChanged="count => _documentCount = count" />
+                        break;
+
+                    case "notes":
+                        <ItemNotesTab ItemType="@ItemTypes.Ticket" ItemId="TicketId" AuthorName="@_currentUserName"
+                                      CountChanged="count => _noteCount = count" />
+                        break;
+
+                    case "historique":
+                        <ItemHistoryTab Rows="_history" />
+                        break;
+                }
+            </div>
+        </div>
+    </div>
+}

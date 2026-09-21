@@ -1,0 +1,130 @@
+@using GlpiNg.Modules.Abstractions.Documents
+@inject IDocumentAttachments Documents
+
+@* Onglet « Documents » d'une fiche d'assistance, partagé par les objets du module : le
+   balisage est le même partout, seul le couple type/identifiant change. *@
+
+<p class="text-secondary">
+    Fichiers rattachés à cet élément. Un document déjà présent dans GlpiNg peut être rattaché sans
+    être téléversé une seconde fois.
+</p>
+
+<div class="mb-3">
+    <label class="form-label">Ajouter un fichier</label>
+    <InputFile class="form-control" OnChange="OnFileSelectedAsync" />
+    @if (_error is not null)
+    {
+        <div class="alert alert-danger mt-2">@_error</div>
+    }
+</div>
+
+@if (_documents.Count == 0)
+{
+    <div class="glpi-config-placeholder">
+        <i class="ti ti-file-off"></i>
+        <p class="mb-0">Aucun document rattaché.</p>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-vcenter">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Fichier</th>
+                    <th>Taille</th>
+                    <th>Ajouté le</th>
+                    <th style="width: 6rem;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (DocumentSummary document in _documents)
+                {
+                    <tr>
+                        <td>@document.Name</td>
+                        <td class="text-secondary">@document.FileName</td>
+                        <td class="text-secondary">@FormatSize(document.SizeBytes)</td>
+                        <td class="text-secondary">@document.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td class="text-nowrap">
+                            @if (!document.IsContentMissing)
+                            {
+                                <a class="btn btn-icon btn-sm" title="Télécharger" href="@Documents.DownloadUrl(document.Id)">
+                                    <i class="ti ti-download"></i>
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning-lt">Fichier absent</span>
+                            }
+                            <button type="button" class="btn btn-icon btn-sm text-danger" title="Détacher"
+                                    @onclick="() => DetachAsync(document.Id)">
+                                <i class="ti ti-unlink"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    /// <summary>Plafond d'un fichier joint, aligné sur ce que le navigateur envoie sans découpage.</summary>
+    private const long MaxBytes = 64 * 1024 * 1024;
+
+    [Parameter, EditorRequired]
+    public required string ItemType { get; set; }
+
+    [Parameter, EditorRequired]
+    public int ItemId { get; set; }
+
+    [Parameter]
+    public string? AuthorName { get; set; }
+
+    /// <summary>Prévient la fiche pour qu'elle rafraîchisse le compteur de l'onglet.</summary>
+    [Parameter]
+    public EventCallback<int> CountChanged { get; set; }
+
+    private List<DocumentSummary> _documents = [];
+    private string? _error;
+
+    protected override async Task OnParametersSetAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _documents = [.. await Documents.GetForItemAsync(ItemType, ItemId)];
+        await CountChanged.InvokeAsync(_documents.Count);
+    }
+
+    private async Task OnFileSelectedAsync(InputFileChangeEventArgs args)
+    {
+        IBrowserFile file = args.File;
+
+        if (file.Size > MaxBytes)
+        {
+            _error = $"Fichier trop volumineux ({FormatSize(file.Size)}) : {FormatSize(MaxBytes)} au maximum.";
+            return;
+        }
+
+        _error = null;
+
+        await using Stream content = file.OpenReadStream(MaxBytes);
+        await Documents.UploadAndAttachAsync(ItemType, ItemId, file.Name, content, file.ContentType, AuthorName, null);
+
+        await LoadAsync();
+    }
+
+    private async Task DetachAsync(int documentId)
+    {
+        await Documents.DetachAsync(ItemType, ItemId, documentId);
+        await LoadAsync();
+    }
+
+    private static string FormatSize(long bytes) => bytes switch
+    {
+        < 1024 => $"{bytes} o",
+        < 1024 * 1024 => $"{bytes / 1024d:0.#} Ko",
+        _ => $"{bytes / (1024d * 1024d):0.#} Mo",
+    };
+}

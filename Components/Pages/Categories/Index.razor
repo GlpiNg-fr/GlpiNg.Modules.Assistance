@@ -1,0 +1,171 @@
+@page "/assistance/categories"
+@rendermode InteractiveServer
+
+<PageTitle>Catégories ITIL — GlpiNg</PageTitle>
+
+<div class="glpi-list-page">
+<div class="card">
+    <div class="card-header d-flex align-items-center justify-content-between glpi-list-toolbar">
+        <div class="btn-list align-items-center">
+            <div class="dropdown">
+                <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="ti ti-search me-1"></i>Rechercher
+                </button>
+                <div class="dropdown-menu p-3" style="min-width: 280px;">
+                    <div class="input-icon">
+                        <span class="input-icon-addon"><i class="ti ti-search"></i></span>
+                        <input type="text" class="form-control" placeholder="Nom, commentaire..."
+                               @bind="_searchTerm" @bind:event="oninput" @onkeyup="OnSearchChanged" />
+                    </div>
+                </div>
+            </div>
+
+            <label class="form-check form-switch align-self-center mb-0">
+                <input class="form-check-input" type="checkbox" checked="@_showInactive"
+                       @onchange="@((ChangeEventArgs e) => OnShowInactiveChanged((bool)(e.Value ?? false)))" />
+                <span class="form-check-label">Afficher les catégories inactives</span>
+            </label>
+        </div>
+
+        <div class="btn-list align-items-center">
+            <div class="dropdown">
+                <button type="button" class="btn btn-icon text-danger" data-bs-toggle="dropdown" aria-expanded="false"
+                        disabled="@(_selectedIds.Count == 0)" title="Supprimer la sélection">
+                    <i class="ti ti-trash"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 300px;">
+                    <p class="mb-2">Supprimer @_selectedIds.Count catégorie(s) ? Cette action est définitive.</p>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-sm">Annuler</button>
+                        <button type="button" class="btn btn-sm btn-danger" @onclick="DeleteSelectedAsync">Supprimer</button>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-icon" @onclick="LoadAsync" title="Rafraîchir">
+                <i class="ti ti-refresh"></i>
+            </button>
+
+            <button type="button" class="btn btn-primary" @onclick="StartCreate">
+                <i class="ti ti-plus me-1"></i>Ajouter
+            </button>
+        </div>
+    </div>
+
+    @if (_error is not null)
+    {
+        <div class="alert alert-danger m-3 mb-0">@_error</div>
+    }
+
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr>
+                    <th style="width: 2.5rem;">
+                        <input class="form-check-input m-0" type="checkbox" title="Sélectionner les éléments visibles"
+                               checked="@AllSelected"
+                               @onchange="@((ChangeEventArgs e) => ToggleSelectAll((bool)(e.Value ?? false)))" />
+                    </th>
+                    <th>Nom</th>
+                    <th>Catégorie parente</th>
+                    <th>Tickets</th>
+                    <th>Commentaire</th>
+                    <th style="width: 6rem;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (_filtered.Count == 0)
+                {
+                    <tr><td colspan="6" class="text-center text-secondary py-4">Aucune catégorie.</td></tr>
+                }
+                else
+                {
+                    @foreach (TicketCategory category in _filtered)
+                    {
+                        <tr>
+                            <td>
+                                <input class="form-check-input m-0" type="checkbox" checked="@_selectedIds.Contains(category.Id)"
+                                       @onchange="@((ChangeEventArgs e) => ToggleSelect(category.Id, (bool)(e.Value ?? false)))" />
+                            </td>
+                            <td>
+                                <span class="fw-semibold">@category.Name</span>
+                                @if (!category.IsActive)
+                                {
+                                    <span class="badge bg-secondary-lt ms-2">Inactive</span>
+                                }
+                            </td>
+                            <td class="text-secondary">@(category.Parent?.Name ?? "—")</td>
+                            <td class="text-secondary">@(_ticketCounts.GetValueOrDefault(category.Id))</td>
+                            <td class="text-secondary">@category.Comment</td>
+                            <td class="text-nowrap">
+                                <button type="button" class="btn btn-icon btn-sm" title="Modifier"
+                                        @onclick="() => StartEdit(category)">
+                                    <i class="ti ti-pencil"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+</div>
+
+<div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="ti ti-category me-2"></i>
+                    @(_edited.Id == 0 ? "Nouvel élément - Catégorie ITIL" : "Catégorie ITIL")
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <div class="glpi-fiche-field">
+                    <label>Nom<span class="text-danger ms-1" title="Champ obligatoire">*</span></label>
+                    <input class="form-control" @bind="_edited.Name" @bind:event="oninput" />
+                </div>
+                <div class="glpi-fiche-field">
+                    <label>Catégorie parente</label>
+                    <select class="form-select" @bind="_editedParentId">
+                        <option value="0">—</option>
+                        @foreach (TicketCategory candidate in ParentCandidates)
+                        {
+                            <option value="@candidate.Id">@Path(candidate)</option>
+                        }
+                    </select>
+                </div>
+                <p class="hint">
+                    Une catégorie ne peut pas être sa propre parente, ni descendre de l'une de ses filles.
+                </p>
+                <div class="glpi-fiche-field">
+                    <label>Commentaire</label>
+                    <textarea class="form-control" rows="3" @bind="_edited.Comment"></textarea>
+                </div>
+                <label class="form-check">
+                    <input class="form-check-input" type="checkbox" checked="@_edited.IsActive"
+                           @onchange="@((ChangeEventArgs e) => _edited.IsActive = (bool)(e.Value ?? false))" />
+                    <span class="form-check-label">Active</span>
+                </label>
+                <p class="hint mb-0">
+                    Une catégorie inactive n'est plus proposée à l'ouverture d'un ticket, mais reste
+                    sur les tickets qui la portent.
+                </p>
+            </div>
+            <div class="modal-footer">
+                @if (_edited.Id != 0)
+                {
+                    <button type="button" class="btn btn-danger me-auto" @onclick="DeleteEditedAsync">
+                        <i class="ti ti-trash me-1"></i>Supprimer
+                    </button>
+                }
+                <button type="button" class="btn btn-warning" disabled="@string.IsNullOrWhiteSpace(_edited.Name)"
+                        @onclick="SaveAsync">
+                    <i class="ti ti-device-floppy me-1"></i>Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

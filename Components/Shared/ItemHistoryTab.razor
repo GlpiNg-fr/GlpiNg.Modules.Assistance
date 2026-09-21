@@ -1,0 +1,42 @@
+@* Onglet « Historique » d'une fiche d'assistance. Les objets du module partagent une table
+   d'historique ; seule la projection en lignes est commune, d'où ce composant qui reçoit des
+   lignes déjà lues plutôt qu'un type d'entité. *@
+
+@if (Rows.Count == 0)
+{
+    <div class="glpi-config-placeholder">
+        <i class="ti ti-history"></i>
+        <p class="mb-0">Aucune modification enregistrée.</p>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-vcenter">
+            <thead>
+                <tr>
+                    <th style="width: 12rem;">Date</th>
+                    <th style="width: 10rem;">Auteur</th>
+                    <th style="width: 14rem;">Champ</th>
+                    <th>Modification</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (HistoryRow row in Rows)
+                {
+                    <tr>
+                        <td class="text-secondary">@row.OccurredAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td class="text-secondary">@row.User</td>
+                        <td>@row.Field</td>
+                        <td class="text-secondary">@row.Description</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public IReadOnlyList<HistoryRow> Rows { get; set; } = [];
+}

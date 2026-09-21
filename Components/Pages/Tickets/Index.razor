@@ -1,0 +1,210 @@
+@page "/assistance/tickets"
+@rendermode InteractiveServer
+
+<PageTitle>Tickets — GlpiNg</PageTitle>
+
+<div class="glpi-list-page">
+<div class="card">
+    <div class="card-header d-flex align-items-center justify-content-between glpi-list-toolbar">
+        <div class="btn-list align-items-center">
+            <div class="dropdown">
+                <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="ti ti-search me-1"></i>Rechercher
+                </button>
+                <div class="dropdown-menu p-3" style="min-width: 280px;">
+                    <div class="input-icon">
+                        <span class="input-icon-addon"><i class="ti ti-search"></i></span>
+                        <input type="text" class="form-control" placeholder="Titre, description, demandeur..."
+                               @bind="_searchTerm" @bind:event="oninput" @onkeyup="OnSearchChanged" />
+                    </div>
+                </div>
+            </div>
+
+            @* Les trois filtres qui servent tous les jours. Le reste (par technicien, par
+               catégorie) se fait par la recherche, faute d'un moteur de critères ici. *@
+            <select class="form-select" style="width: auto;" @bind="_statusFilter" @bind:after="ApplyFilter">
+                <option value="open">Tickets ouverts</option>
+                <option value="all">Tous les statuts</option>
+                @foreach (TicketStatus status in Enum.GetValues<TicketStatus>())
+                {
+                    <option value="@((int)status)">@TicketLabels.For(status)</option>
+                }
+            </select>
+
+            <label class="form-check form-switch align-self-center mb-0">
+                <input class="form-check-input" type="checkbox" checked="@_mineOnly"
+                       @onchange="@((ChangeEventArgs e) => OnMineOnlyChanged((bool)(e.Value ?? false)))" />
+                <span class="form-check-label">Qui me sont attribués</span>
+            </label>
+
+            <label class="form-check form-switch align-self-center mb-0">
+                <input class="form-check-input" type="checkbox" checked="@_overdueOnly"
+                       @onchange="@((ChangeEventArgs e) => OnOverdueOnlyChanged((bool)(e.Value ?? false)))" />
+                <span class="form-check-label">En retard</span>
+            </label>
+        </div>
+
+        <div class="btn-list align-items-center">
+            <div class="dropdown">
+                <button type="button" class="btn btn-icon text-danger" data-bs-toggle="dropdown" aria-expanded="false"
+                        disabled="@(_selectedIds.Count == 0)" title="Supprimer la sélection">
+                    <i class="ti ti-trash"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 280px;">
+                    <p class="mb-2">
+                        Supprimer @_selectedIds.Count ticket(s), leurs suivis et leurs tâches ?
+                        Cette action est définitive.
+                    </p>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-sm">Annuler</button>
+                        <button type="button" class="btn btn-sm btn-danger" @onclick="DeleteSelectedAsync">Supprimer</button>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-icon" @onclick="LoadAsync" title="Rafraîchir">
+                <i class="ti ti-refresh"></i>
+            </button>
+
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newTicketModal">
+                <i class="ti ti-plus me-1"></i>Ajouter
+            </button>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr>
+                    <th style="width: 2.5rem;">
+                        <input class="form-check-input m-0" type="checkbox" title="Sélectionner les éléments visibles"
+                               checked="@AllSelected"
+                               @onchange="@((ChangeEventArgs e) => ToggleSelectAll((bool)(e.Value ?? false)))" />
+                    </th>
+                    <th style="width: 5rem;">N°</th>
+                    <th>Titre</th>
+                    <th>Statut</th>
+                    <th>Priorité</th>
+                    <th>Catégorie</th>
+                    <th>Demandeur</th>
+                    <th>Attribué à</th>
+                    <th>Ouvert le</th>
+                    <th>Échéance</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (_filtered.Count == 0)
+                {
+                    <tr><td colspan="10" class="text-center text-secondary py-4">Aucun ticket.</td></tr>
+                }
+                else
+                {
+                    @foreach (Ticket ticket in _filtered)
+                    {
+                        <tr>
+                            <td>
+                                <input class="form-check-input m-0" type="checkbox" checked="@_selectedIds.Contains(ticket.Id)"
+                                       @onchange="@((ChangeEventArgs e) => ToggleSelect(ticket.Id, (bool)(e.Value ?? false)))" />
+                            </td>
+                            <td class="text-secondary">@ticket.Id</td>
+                            <td>
+                                <a href="@($"/assistance/tickets/{ticket.Id}")" class="text-reset fw-semibold">
+                                    <i class="ti @(ticket.Type == TicketType.Incident ? "ti-alert-circle" : "ti-help-circle") me-1 text-secondary"></i>@ticket.Name
+                                </a>
+                            </td>
+                            <td><span class="badge @TicketLabels.BadgeFor(ticket.Status)">@TicketLabels.For(ticket.Status)</span></td>
+                            <td><span class="badge @ItilLabels.BadgeFor(ticket.Priority)">@ItilLabels.For(ticket.Priority)</span></td>
+                            <td class="text-secondary">@ticket.Category?.Name</td>
+                            <td class="text-secondary">@RequesterOf(ticket)</td>
+                            <td class="text-secondary">@AssigneeOf(ticket)</td>
+                            <td class="text-secondary">@ticket.OpenedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="@(ticket.IsOverdue ? "text-danger fw-semibold" : "text-secondary")">
+                                @* Une échéance dépassée sur un ticket encore ouvert est la seule
+                                   information de cette liste qui appelle une action immédiate. *@
+                                @(ticket.DueDate?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "—")
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+</div>
+
+<div class="modal fade" id="newTicketModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="ti ti-ticket me-2"></i>Nouvel élément - Ticket</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <div class="glpi-fiche-field">
+                    <label>Titre<span class="text-danger ms-1" title="Champ obligatoire">*</span></label>
+                    <input class="form-control" @bind="_newTicket.Name" @bind:event="oninput" />
+                </div>
+                <div class="glpi-fiche-field">
+                    <label>Description</label>
+                    <textarea class="form-control" rows="4" @bind="_newTicket.Content"></textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="glpi-fiche-field">
+                            <label>Type</label>
+                            <select class="form-select" value="@((int)_newTicket.Type)"
+                                    @onchange="@(e => _newTicket.Type = (TicketType)int.Parse(e.Value?.ToString() ?? "1"))">
+                                @foreach (TicketType type in Enum.GetValues<TicketType>())
+                                {
+                                    <option value="@((int)type)">@TicketLabels.For(type)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="glpi-fiche-field">
+                            <label>Urgence</label>
+                            <select class="form-select" value="@((int)_newTicket.Urgency)"
+                                    @onchange="@(e => _newTicket.Urgency = (ItilLevel)int.Parse(e.Value?.ToString() ?? "3"))">
+                                @foreach (ItilLevel level in Enum.GetValues<ItilLevel>())
+                                {
+                                    <option value="@((int)level)">@ItilLabels.For(level)</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="glpi-fiche-field">
+                            <label>Catégorie</label>
+                            <select class="form-select" @bind="_newCategoryId">
+                                <option value="0">—</option>
+                                @foreach (TicketCategory category in _categories)
+                                {
+                                    <option value="@category.Id">@CategoryPath(category)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="glpi-fiche-field">
+                            <label>Demandeur</label>
+                            <select class="form-select" @bind="_newRequesterId">
+                                <option value="0">—</option>
+                                @foreach (var user in _users)
+                                {
+                                    <option value="@user.Id">@user.Name</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <p class="hint">
+                    Impact, attribution et échéance se renseignent sur la fiche. La priorité se
+                    calcule à partir de l'urgence et de l'impact.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" disabled="@string.IsNullOrWhiteSpace(_newTicket.Name)"
+                        @onclick="CreateAsync">
+                    <i class="ti ti-plus me-1"></i>Ajouter
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

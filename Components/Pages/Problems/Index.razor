@@ -1,0 +1,200 @@
+@page "/assistance/problems"
+@rendermode InteractiveServer
+
+<PageTitle>Problèmes — GlpiNg</PageTitle>
+
+<div class="glpi-list-page">
+<div class="card">
+    <div class="card-header d-flex align-items-center justify-content-between glpi-list-toolbar">
+        <div class="btn-list align-items-center">
+            <div class="dropdown">
+                <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="ti ti-search me-1"></i>Rechercher
+                </button>
+                <div class="dropdown-menu p-3" style="min-width: 280px;">
+                    <div class="input-icon">
+                        <span class="input-icon-addon"><i class="ti ti-search"></i></span>
+                        <input type="text" class="form-control" placeholder="Titre, énoncé, cause..."
+                               @bind="_searchTerm" @bind:event="oninput" @onkeyup="OnSearchChanged" />
+                    </div>
+                </div>
+            </div>
+
+            <select class="form-select" style="width: auto;" @bind="_statusFilter" @bind:after="ApplyFilter">
+                <option value="open">Problèmes ouverts</option>
+                <option value="all">Tous les statuts</option>
+                @foreach (ProblemStatus status in ProblemLabels.Lifecycle)
+                {
+                    <option value="@((int)status)">@ProblemLabels.For(status)</option>
+                }
+            </select>
+
+            <label class="form-check form-switch align-self-center mb-0">
+                <input class="form-check-input" type="checkbox" checked="@_mineOnly"
+                       @onchange="@((ChangeEventArgs e) => OnMineOnlyChanged((bool)(e.Value ?? false)))" />
+                <span class="form-check-label">Qui me sont attribués</span>
+            </label>
+
+            @* Un problème sans incident rattaché n'est pas encore relié à ce qu'il explique :
+               c'est le premier tri d'une revue de problèmes. *@
+            <label class="form-check form-switch align-self-center mb-0">
+                <input class="form-check-input" type="checkbox" checked="@_unlinkedOnly"
+                       @onchange="@((ChangeEventArgs e) => OnUnlinkedOnlyChanged((bool)(e.Value ?? false)))" />
+                <span class="form-check-label">Sans incident rattaché</span>
+            </label>
+        </div>
+
+        <div class="btn-list align-items-center">
+            <div class="dropdown">
+                <button type="button" class="btn btn-icon text-danger" data-bs-toggle="dropdown" aria-expanded="false"
+                        disabled="@(_selectedIds.Count == 0)" title="Supprimer la sélection">
+                    <i class="ti ti-trash"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 300px;">
+                    <p class="mb-2">
+                        Supprimer @_selectedIds.Count problème(s), leurs suivis et leurs tâches ?
+                        Les incidents rattachés ne sont pas supprimés, seulement détachés.
+                    </p>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-sm">Annuler</button>
+                        <button type="button" class="btn btn-sm btn-danger" @onclick="DeleteSelectedAsync">Supprimer</button>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-icon" @onclick="LoadAsync" title="Rafraîchir">
+                <i class="ti ti-refresh"></i>
+            </button>
+
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newProblemModal">
+                <i class="ti ti-plus me-1"></i>Ajouter
+            </button>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr>
+                    <th style="width: 2.5rem;">
+                        <input class="form-check-input m-0" type="checkbox" title="Sélectionner les éléments visibles"
+                               checked="@AllSelected"
+                               @onchange="@((ChangeEventArgs e) => ToggleSelectAll((bool)(e.Value ?? false)))" />
+                    </th>
+                    <th style="width: 5rem;">N°</th>
+                    <th>Titre</th>
+                    <th>Statut</th>
+                    <th>Priorité</th>
+                    <th>Catégorie</th>
+                    <th>Attribué à</th>
+                    <th>Incidents</th>
+                    <th>Ouvert le</th>
+                    <th>Échéance</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (_filtered.Count == 0)
+                {
+                    <tr><td colspan="10" class="text-center text-secondary py-4">Aucun problème.</td></tr>
+                }
+                else
+                {
+                    @foreach (Problem problem in _filtered)
+                    {
+                        <tr>
+                            <td>
+                                <input class="form-check-input m-0" type="checkbox" checked="@_selectedIds.Contains(problem.Id)"
+                                       @onchange="@((ChangeEventArgs e) => ToggleSelect(problem.Id, (bool)(e.Value ?? false)))" />
+                            </td>
+                            <td class="text-secondary">@problem.Id</td>
+                            <td>
+                                <a href="@($"/assistance/problems/{problem.Id}")" class="text-reset fw-semibold">
+                                    <i class="ti ti-bulb me-1 text-secondary"></i>@problem.Name
+                                </a>
+                            </td>
+                            <td><span class="badge @ProblemLabels.BadgeFor(problem.Status)">@ProblemLabels.For(problem.Status)</span></td>
+                            <td><span class="badge @ItilLabels.BadgeFor(problem.Priority)">@ItilLabels.For(problem.Priority)</span></td>
+                            <td class="text-secondary">@problem.Category?.Name</td>
+                            <td class="text-secondary">@AssigneeOf(problem)</td>
+                            <td class="text-secondary">
+                                @{
+                                    int linked = _ticketCounts.GetValueOrDefault(problem.Id);
+                                }
+                                @if (linked == 0)
+                                {
+                                    <span class="text-secondary">—</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary-lt">@linked</span>
+                                }
+                            </td>
+                            <td class="text-secondary">@problem.OpenedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="@(problem.IsOverdue ? "text-danger fw-semibold" : "text-secondary")">
+                                @(problem.DueDate?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "—")
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+</div>
+
+<div class="modal fade" id="newProblemModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="ti ti-bulb me-2"></i>Nouvel élément - Problème</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <div class="glpi-fiche-field">
+                    <label>Titre<span class="text-danger ms-1" title="Champ obligatoire">*</span></label>
+                    <input class="form-control" @bind="_newProblem.Name" @bind:event="oninput" />
+                </div>
+                <div class="glpi-fiche-field">
+                    <label>Énoncé</label>
+                    <textarea class="form-control" rows="4" @bind="_newProblem.Content"></textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="glpi-fiche-field">
+                            <label>Urgence</label>
+                            <select class="form-select" value="@((int)_newProblem.Urgency)"
+                                    @onchange="@(e => _newProblem.Urgency = (ItilLevel)int.Parse(e.Value?.ToString() ?? "3"))">
+                                @foreach (ItilLevel level in Enum.GetValues<ItilLevel>())
+                                {
+                                    <option value="@((int)level)">@ItilLabels.For(level)</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="glpi-fiche-field">
+                            <label>Catégorie</label>
+                            <select class="form-select" @bind="_newCategoryId">
+                                <option value="0">—</option>
+                                @foreach (TicketCategory category in _categories)
+                                {
+                                    <option value="@category.Id">@CategoryPath(category)</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <p class="hint">
+                    Analyse, contournement, incidents rattachés et attribution se renseignent sur la
+                    fiche. La priorité se calcule à partir de l'urgence et de l'impact.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" disabled="@string.IsNullOrWhiteSpace(_newProblem.Name)"
+                        @onclick="CreateAsync">
+                    <i class="ti ti-plus me-1"></i>Ajouter
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

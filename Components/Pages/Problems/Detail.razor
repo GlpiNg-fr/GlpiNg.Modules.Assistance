@@ -1,0 +1,588 @@
+@page "/assistance/problems/{ProblemId:int}"
+@rendermode InteractiveServer
+
+<PageTitle>@(_problem is null ? "Problème" : $"#{_problem.Id} {_problem.Name}") — GlpiNg</PageTitle>
+
+@if (_problem is null)
+{
+    <div class="card"><div class="card-body text-center text-secondary py-5">Problème introuvable.</div></div>
+}
+else
+{
+    <div class="glpi-fiche">
+        <div class="glpi-fiche-header d-flex align-items-center justify-content-between">
+            <h2 class="mb-0">
+                <i class="ti ti-bulb me-2"></i>
+                <span class="text-secondary">#@_problem.Id</span> @_problem.Name
+                <span class="badge @ProblemLabels.BadgeFor(_problem.Status) ms-2">@ProblemLabels.For(_problem.Status)</span>
+                @if (_problem.IsOverdue)
+                {
+                    <span class="badge bg-danger-lt ms-1">En retard</span>
+                }
+            </h2>
+            <div class="btn-list">
+                <a class="btn" href="/assistance/problems"><i class="ti ti-arrow-left me-1"></i>Retour à la liste</a>
+
+                @if (_problem.IsOpen)
+                {
+                    <button type="button" class="btn btn-success" @onclick="@(() => _activeTab = "solution")">
+                        <i class="ti ti-check me-1"></i>Résoudre
+                    </button>
+                }
+                else
+                {
+                    <button type="button" class="btn" @onclick="ReopenAsync">
+                        <i class="ti ti-rotate-2 me-1"></i>Rouvrir
+                    </button>
+                }
+
+                <div class="dropdown">
+                    <button type="button" class="btn btn-icon text-danger" data-bs-toggle="dropdown" aria-expanded="false"
+                            title="Supprimer">
+                        <i class="ti ti-trash"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 300px;">
+                        <p class="mb-2">
+                            Supprimer ce problème, ses suivis et ses tâches ? Les incidents rattachés
+                            ne sont pas supprimés, seulement détachés.
+                        </p>
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-sm">Annuler</button>
+                            <button type="button" class="btn btn-sm btn-danger" @onclick="DeleteAsync">Supprimer</button>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-warning" disabled="@_isSaving" @onclick="SaveAsync">
+                    <i class="ti ti-device-floppy me-1"></i>Enregistrer
+                </button>
+            </div>
+        </div>
+
+        <div class="glpi-fiche-layout">
+            <aside class="glpi-fiche-sidebar">
+                @foreach ((string key, string label, string icon, int? count) in Tabs)
+                {
+                    <button type="button" class="glpi-fiche-tab-item @(_activeTab == key ? "active" : "")"
+                            @onclick="() => _activeTab = key">
+                        <i class="ti @icon"></i>
+                        <span>@label</span>
+                        @if (count is { } value)
+                        {
+                            <span class="glpi-fiche-tab-count">@value</span>
+                        }
+                    </button>
+                }
+            </aside>
+
+            <div class="glpi-fiche-panel">
+                @switch (_activeTab)
+                {
+                    case "fiche":
+                        @if (_error is not null)
+                        {
+                            <div class="alert alert-danger">@_error</div>
+                        }
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="glpi-fiche-field">
+                                    <label>Titre<span class="text-danger ms-1">*</span></label>
+                                    <input class="form-control" @bind="_problem.Name" />
+                                </div>
+                                <div class="glpi-fiche-field">
+                                    <label>Énoncé</label>
+                                    <textarea class="form-control" rows="6" @bind="_problem.Content"></textarea>
+                                </div>
+                                <div class="glpi-fiche-field">
+                                    <label>Statut</label>
+                                    <select class="form-select" value="@((int)_problem.Status)" @onchange="OnStatusChanged">
+                                        @foreach (ProblemStatus status in ProblemLabels.Lifecycle)
+                                        {
+                                            <option value="@((int)status)">@ProblemLabels.For(status)</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="glpi-fiche-field">
+                                    <label>Catégorie</label>
+                                    <select class="form-select" @bind="_categoryId">
+                                        <option value="0">—</option>
+                                        @foreach (TicketCategory category in _categories)
+                                        {
+                                            <option value="@category.Id">@CategoryPath(category)</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="glpi-fiche-field">
+                                    <label>Rédacteur</label>
+                                    <select class="form-select" @bind="_authorId">
+                                        <option value="0">—</option>
+                                        @foreach (var user in _users)
+                                        {
+                                            <option value="@user.Id">@user.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="glpi-fiche-field">
+                                    <label>Attribué au technicien</label>
+                                    <select class="form-select" @bind="_assignedUserId">
+                                        <option value="0">—</option>
+                                        @foreach (var user in _users)
+                                        {
+                                            <option value="@user.Id">@user.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="glpi-fiche-field">
+                                    <label>Attribué au groupe</label>
+                                    <select class="form-select" @bind="_assignedGroupId">
+                                        <option value="0">—</option>
+                                        @foreach (var group in _groups)
+                                        {
+                                            <option value="@group.Id">@group.Name</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <hr />
+
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="glpi-fiche-field">
+                                            <label>Urgence</label>
+                                            <select class="form-select" value="@((int)_problem.Urgency)"
+                                                    @onchange="OnUrgencyChanged">
+                                                @foreach (ItilLevel level in Enum.GetValues<ItilLevel>())
+                                                {
+                                                    <option value="@((int)level)">@ItilLabels.For(level)</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="glpi-fiche-field">
+                                            <label>Impact</label>
+                                            <select class="form-select" value="@((int)_problem.Impact)"
+                                                    @onchange="OnImpactChanged">
+                                                @foreach (ItilLevel level in Enum.GetValues<ItilLevel>())
+                                                {
+                                                    <option value="@((int)level)">@ItilLabels.For(level)</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="glpi-fiche-field">
+                                    <label>
+                                        Priorité
+                                        @if (!_problem.IsPriorityManual)
+                                        {
+                                            <span class="text-secondary ms-1">(calculée)</span>
+                                        }
+                                    </label>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <select class="form-select" value="@((int)_problem.Priority)"
+                                                @onchange="OnPriorityChanged">
+                                            @foreach (ItilLevel level in Enum.GetValues<ItilLevel>())
+                                            {
+                                                <option value="@((int)level)">@ItilLabels.For(level)</option>
+                                            }
+                                        </select>
+                                        @if (_problem.IsPriorityManual)
+                                        {
+                                            <button type="button" class="btn btn-sm text-nowrap" @onclick="ResetPriority"
+                                                    title="Revenir à la priorité déduite de l'urgence et de l'impact">
+                                                <i class="ti ti-refresh me-1"></i>Recalculer
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                                @if (_problem.IsPriorityManual)
+                                {
+                                    <p class="hint">Forcée à la main : elle ne suivra plus l'urgence ni l'impact.</p>
+                                }
+
+                                <div class="glpi-fiche-field">
+                                    <label>Échéance</label>
+                                    <input class="form-control" type="datetime-local" @bind="_problem.DueDate" />
+                                </div>
+                                <div class="glpi-fiche-field">
+                                    <label>Ouvert le</label>
+                                    <input class="form-control" disabled
+                                           value="@_problem.OpenedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")" />
+                                </div>
+                                @if (_problem.SolvedAt is { } solved)
+                                {
+                                    <div class="glpi-fiche-field">
+                                        <label>Résolu le</label>
+                                        <input class="form-control" disabled
+                                               value="@solved.ToLocalTime().ToString("dd/MM/yyyy HH:mm")" />
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        break;
+
+                    case "analyse":
+                        <p class="text-secondary">
+                            L'analyse en trois temps : ce qui se constate, ce qui l'explique, ce que
+                            ça coûte. C'est ce qui distingue un problème d'un incident — l'incident
+                            se répare, le problème se comprend.
+                        </p>
+
+                        <div class="glpi-fiche-field">
+                            <label>Symptômes</label>
+                            <textarea class="form-control" rows="5" placeholder="Ce que rapportent les incidents…"
+                                      @bind="_problem.SymptomContent"></textarea>
+                        </div>
+                        <div class="glpi-fiche-field">
+                            <label>Cause</label>
+                            <textarea class="form-control" rows="5" placeholder="La cause racine, une fois trouvée…"
+                                      @bind="_problem.CauseContent"></textarea>
+                        </div>
+                        <div class="glpi-fiche-field">
+                            <label>Conséquences</label>
+                            <textarea class="form-control" rows="5" placeholder="Périmètre touché tant que le problème dure…"
+                                      @bind="_problem.ImpactContent"></textarea>
+                        </div>
+                        <div class="glpi-fiche-field">
+                            <label>Contournement</label>
+                            <textarea class="form-control" rows="5"
+                                      placeholder="Ce qui rend le service acceptable en attendant le correctif…"
+                                      @bind="_problem.Workaround"></textarea>
+                        </div>
+                        <p class="hint">
+                            Le contournement s'applique aux incidents en cours ; la solution, plus
+                            bas, traite la cause.
+                        </p>
+                        break;
+
+                    case "incidents":
+                        <p class="text-secondary">
+                            Les incidents que ce problème explique. C'est ce rattachement qui donne
+                            sa mesure au problème : sans lui, rien ne dit combien de monde il touche.
+                        </p>
+
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-10">
+                                        <label class="form-label">Rattacher un incident</label>
+                                        <select class="form-select" @bind="_ticketToAttach">
+                                            <option value="0">—</option>
+                                            @foreach (Ticket candidate in _ticketCandidates)
+                                            {
+                                                <option value="@candidate.Id">
+                                                    #@candidate.Id @candidate.Name (@TicketLabels.For(candidate.Status))
+                                                </option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-primary w-100"
+                                                disabled="@(_ticketToAttach == 0)" @onclick="AttachTicketAsync">
+                                            <i class="ti ti-link me-1"></i>Rattacher
+                                        </button>
+                                    </div>
+                                </div>
+                                @if (_ticketCandidates.Count == 0)
+                                {
+                                    <p class="hint mt-2 mb-0">
+                                        Aucun incident à rattacher : tous ceux qui existent le sont déjà.
+                                    </p>
+                                }
+                            </div>
+                        </div>
+
+                        @if (_tickets.Count == 0)
+                        {
+                            <div class="glpi-config-placeholder">
+                                <i class="ti ti-ticket-off"></i>
+                                <p class="mb-0">Aucun incident rattaché.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-vcenter">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 5rem;">N°</th>
+                                            <th>Titre</th>
+                                            <th>Statut</th>
+                                            <th>Priorité</th>
+                                            <th>Ouvert le</th>
+                                            <th style="width: 3rem;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (Ticket ticket in _tickets)
+                                        {
+                                            <tr>
+                                                <td class="text-secondary">@ticket.Id</td>
+                                                <td>
+                                                    <a href="@($"/assistance/tickets/{ticket.Id}")" class="text-reset fw-semibold">
+                                                        @ticket.Name
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    <span class="badge @TicketLabels.BadgeFor(ticket.Status)">
+                                                        @TicketLabels.For(ticket.Status)
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge @ItilLabels.BadgeFor(ticket.Priority)">
+                                                        @ItilLabels.For(ticket.Priority)
+                                                    </span>
+                                                </td>
+                                                <td class="text-secondary">
+                                                    @ticket.OpenedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-icon btn-sm text-danger" title="Détacher"
+                                                            @onclick="() => DetachTicketAsync(ticket.Id)">
+                                                        <i class="ti ti-unlink"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        break;
+
+                    case "suivis":
+                        <p class="text-secondary">
+                            Le fil de l'analyse. Un suivi interne reste entre intervenants.
+                        </p>
+
+                        <div class="mb-3">
+                            <textarea class="form-control" rows="3" placeholder="Ajouter un suivi…"
+                                      @bind="_newFollowup" @bind:event="oninput"></textarea>
+                            <div class="d-flex align-items-center gap-3 mt-2">
+                                <button type="button" class="btn btn-primary"
+                                        disabled="@string.IsNullOrWhiteSpace(_newFollowup)" @onclick="AddFollowupAsync">
+                                    <i class="ti ti-plus me-1"></i>Ajouter
+                                </button>
+                                <label class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" checked="@_newFollowupPrivate"
+                                           @onchange="@((ChangeEventArgs e) => _newFollowupPrivate = (bool)(e.Value ?? false))" />
+                                    <span class="form-check-label">Suivi interne</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        @if (_followups.Count == 0)
+                        {
+                            <div class="glpi-config-placeholder">
+                                <i class="ti ti-message-off"></i>
+                                <p class="mb-0">Aucun suivi.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (ItilFollowup followup in _followups)
+                            {
+                                <div class="card mb-2 @(followup.IsPrivate ? "border-warning" : "")">
+                                    <div class="card-body">
+                                        <div style="white-space: pre-wrap;">@followup.Content</div>
+                                        <div class="d-flex align-items-center justify-content-between mt-2">
+                                            <div class="text-secondary small">
+                                                <i class="ti ti-user me-1"></i>@followup.AuthorName
+                                                <span class="ms-2">
+                                                    <i class="ti ti-calendar me-1"></i>@followup.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                                </span>
+                                                @if (followup.IsPrivate)
+                                                {
+                                                    <span class="badge bg-warning-lt ms-2">Interne</span>
+                                                }
+                                            </div>
+                                            <button type="button" class="btn btn-icon btn-sm text-danger" title="Supprimer"
+                                                    @onclick="() => DeleteFollowupAsync(followup.Id)">
+                                                <i class="ti ti-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        break;
+
+                    case "taches":
+                        <p class="text-secondary">
+                            Travaux d'analyse ou de correction, planifiables et attribuables.
+                        </p>
+
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-5">
+                                        <label class="form-label">Tâche</label>
+                                        <input class="form-control" @bind="_newTask.Content" @bind:event="oninput" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Technicien</label>
+                                        <select class="form-select" @bind="_newTaskUserId">
+                                            <option value="0">—</option>
+                                            @foreach (var user in _users)
+                                            {
+                                                <option value="@user.Id">@user.Name</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Planifiée le</label>
+                                        <input class="form-control" type="datetime-local" @bind="_newTask.PlannedStart" />
+                                    </div>
+                                    <div class="col-md-1">
+                                        <button type="button" class="btn btn-primary w-100"
+                                                disabled="@string.IsNullOrWhiteSpace(_newTask.Content)" @onclick="AddTaskAsync">
+                                            <i class="ti ti-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (_tasks.Count == 0)
+                        {
+                            <div class="glpi-config-placeholder">
+                                <i class="ti ti-checklist"></i>
+                                <p class="mb-0">Aucune tâche.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-vcenter">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 3rem;"></th>
+                                            <th>Tâche</th>
+                                            <th>Technicien</th>
+                                            <th>Planifiée</th>
+                                            <th>Durée</th>
+                                            <th style="width: 3rem;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (ItilTask task in _tasks)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <input class="form-check-input m-0" type="checkbox"
+                                                           checked="@(task.State == ItilTaskState.Done)"
+                                                           @onchange="@((ChangeEventArgs e) => ToggleTaskAsync(task.Id, (bool)(e.Value ?? false)))" />
+                                                </td>
+                                                <td class="@(task.State == ItilTaskState.Done ? "text-secondary text-decoration-line-through" : "")">
+                                                    @task.Content
+                                                </td>
+                                                <td class="text-secondary">
+                                                    @(task.AssignedUserId is { } id ? NameOfUser(id) : "—")
+                                                </td>
+                                                <td class="text-secondary">
+                                                    @(task.PlannedStart?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "—")
+                                                </td>
+                                                <td class="text-secondary">
+                                                    @(task.DurationMinutes is { } minutes ? $"{minutes} min" : "—")
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-icon btn-sm text-danger" title="Supprimer"
+                                                            @onclick="() => DeleteTaskAsync(task.Id)">
+                                                        <i class="ti ti-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        break;
+
+                    case "solution":
+                        string solvedOn = _problem.SolvedAt is { } solvedDate
+                            ? $" le {solvedDate.ToLocalTime():dd/MM/yyyy HH:mm}"
+                            : string.Empty;
+
+                        @* Sous observation n'est pas un état d'arrivée : la solution est posée, le
+                           problème reste ouvert. Le dire ici évite de croire qu'il est réglé. *@
+                        @if (_problem.Status is ProblemStatus.Observed)
+                        {
+                            <div class="alert alert-info">
+                                Solution posée@(solvedOn), problème sous observation : il reste
+                                ouvert tant que l'arrêt des incidents n'est pas confirmé.
+                            </div>
+                        }
+                        else if (_problem.Status is ProblemStatus.Solved or ProblemStatus.Closed)
+                        {
+                            <div class="alert alert-success">
+                                Problème @ProblemLabels.For(_problem.Status).ToLowerInvariant()@(solvedOn).
+                            </div>
+                        }
+
+                        <div class="glpi-fiche-field">
+                            <label>Type de solution</label>
+                            <input class="form-control" placeholder="Correctif éditeur, changement de configuration…"
+                                   @bind="_problem.SolutionType" />
+                        </div>
+                        <div class="glpi-fiche-field">
+                            <label>Solution</label>
+                            <textarea class="form-control" rows="6" @bind="_problem.Solution" @bind:event="oninput"></textarea>
+                        </div>
+
+                        @if (_problem.IsOpen)
+                        {
+                            <button type="button" class="btn btn-success" disabled="@string.IsNullOrWhiteSpace(_problem.Solution)"
+                                    @onclick="SolveAsync">
+                                <i class="ti ti-check me-1"></i>
+                                @(_problem.Status is ProblemStatus.Observed ? "Confirmer la résolution" : "Marquer comme résolu")
+                            </button>
+
+                            @if (_problem.Status is not ProblemStatus.Observed)
+                            {
+                                <button type="button" class="btn ms-2" disabled="@string.IsNullOrWhiteSpace(_problem.Solution)"
+                                        @onclick="ObserveAsync">
+                                    <i class="ti ti-eye me-1"></i>Mettre sous observation
+                                </button>
+                                <p class="hint">
+                                    « Sous observation » enregistre la solution sans clore l'analyse :
+                                    à choisir tant qu'on attend de voir si les incidents cessent.
+                                </p>
+                            }
+                        }
+                        else if (_problem.Status is ProblemStatus.Solved)
+                        {
+                            <button type="button" class="btn" @onclick="CloseAsync">
+                                <i class="ti ti-lock me-1"></i>Clore le problème
+                            </button>
+                            @if (_openTicketCount > 0)
+                            {
+                                <p class="hint text-warning">
+                                    @_openTicketCount incident(s) rattaché(s) sont encore ouverts.
+                                </p>
+                            }
+                        }
+                        break;
+
+                    case "documents":
+                        <ItemDocumentsTab ItemType="@ItemTypes.Problem" ItemId="ProblemId" AuthorName="@_currentUserName"
+                                          CountChanged="count => _documentCount = count" />
+                        break;
+
+                    case "notes":
+                        <ItemNotesTab ItemType="@ItemTypes.Problem" ItemId="ProblemId" AuthorName="@_currentUserName"
+                                      CountChanged="count => _noteCount = count" />
+                        break;
+
+                    case "historique":
+                        <ItemHistoryTab Rows="_history" />
+                        break;
+                }
+            </div>
+        </div>
+    </div>
+}

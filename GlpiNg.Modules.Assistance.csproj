@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>GlpiNg.Modules.Assistance</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Permet d'utiliser les types ASP.NET Core (composants Razor, AuthenticationStateProvider...)
+      dans cette bibliothèque de classes sans dépendre du projet hôte GlpiNg.Web.
+    -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Abstractions EF Core seules : ni fournisseur, ni DbContext concret — voir les autres modules. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.12" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.12" />
+    <PackageReference Include="Blazor.Bootstrap" Version="4.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Abstractions seules. L'assistance emprunte à l'hôte, par leurs contrats : l'annuaire des
+      acteurs (demandeur, technicien, groupe), les documents, les notes, et la publication des
+      notifications. Elle ne connaît ni le parc ni le déploiement — un ticket peut viser un actif,
+      mais ce rattachement demandera une colonne côté Inventory et reste à faire.
+    -->
+    <ProjectReference Include="..\GlpiNg.Modules.Abstractions\GlpiNg.Modules.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>

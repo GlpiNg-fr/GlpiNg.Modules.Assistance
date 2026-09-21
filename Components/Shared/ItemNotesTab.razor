@@ -1,0 +1,144 @@
+@using GlpiNg.Modules.Abstractions.Notes
+@inject IItemNotes Notes
+
+@* Onglet « Notes » d'une fiche d'assistance, partagé par les objets du module. *@
+
+<p class="text-secondary">
+    Notes libres attachées à cet élément : le carnet de bord de ceux qui le suivent.
+</p>
+
+<div class="mb-3">
+    <label class="form-label" for="assist-new-note">Ajouter une note</label>
+    <textarea id="assist-new-note" class="form-control" rows="3"
+              @bind="_newNote" @bind:event="oninput"></textarea>
+    <button type="button" class="btn btn-primary mt-2"
+            disabled="@string.IsNullOrWhiteSpace(_newNote)" @onclick="AddAsync">
+        <i class="ti ti-plus me-1"></i>Ajouter
+    </button>
+</div>
+
+@if (_notes.Count == 0)
+{
+    <div class="glpi-config-placeholder">
+        <i class="ti ti-notes-off"></i>
+        <p class="mb-0">Aucune note pour cet élément.</p>
+    </div>
+}
+else
+{
+    @foreach (ItemNote note in _notes)
+    {
+        <div class="card mb-2">
+            <div class="card-body">
+                @if (_editingId == note.Id)
+                {
+                    <textarea class="form-control" rows="4" @bind="_editing" @bind:event="oninput"></textarea>
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-primary btn-sm"
+                                disabled="@string.IsNullOrWhiteSpace(_editing)" @onclick="SaveEditAsync">
+                            Enregistrer
+                        </button>
+                        <button type="button" class="btn btn-sm" @onclick="() => _editingId = null">Annuler</button>
+                    </div>
+                }
+                else
+                {
+                    @* Texte brut, volontairement : ces fiches n'ont pas de rendu Markdown, et
+                       interpréter du balisage ici obligerait à l'assainir. *@
+                    <div style="white-space: pre-wrap;">@note.Content</div>
+
+                    <div class="d-flex align-items-center justify-content-between mt-2">
+                        <div class="text-secondary small">
+                            <i class="ti ti-user me-1"></i>@note.AuthorName
+                            <span class="ms-2">
+                                <i class="ti ti-calendar me-1"></i>@note.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                            </span>
+                            @if (note.UpdatedAt is { } updated)
+                            {
+                                <span class="ms-2">
+                                    <i class="ti ti-pencil me-1"></i>Modifiée le @updated.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                </span>
+                            }
+                        </div>
+                        <div class="text-nowrap">
+                            <button type="button" class="btn btn-icon btn-sm" title="Modifier"
+                                    @onclick="() => StartEdit(note)">
+                                <i class="ti ti-pencil"></i>
+                            </button>
+                            <button type="button" class="btn btn-icon btn-sm text-danger" title="Supprimer"
+                                    @onclick="() => DeleteAsync(note.Id)">
+                                <i class="ti ti-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public required string ItemType { get; set; }
+
+    [Parameter, EditorRequired]
+    public int ItemId { get; set; }
+
+    [Parameter]
+    public string? AuthorName { get; set; }
+
+    /// <summary>Prévient la fiche pour qu'elle rafraîchisse le compteur de l'onglet.</summary>
+    [Parameter]
+    public EventCallback<int> CountChanged { get; set; }
+
+    private List<ItemNote> _notes = [];
+    private string _newNote = string.Empty;
+    private int? _editingId;
+    private string _editing = string.Empty;
+
+    protected override async Task OnParametersSetAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _notes = [.. await Notes.GetForItemAsync(ItemType, ItemId)];
+        await CountChanged.InvokeAsync(_notes.Count);
+    }
+
+    private void StartEdit(ItemNote note)
+    {
+        _editingId = note.Id;
+        _editing = note.Content;
+    }
+
+    private async Task AddAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_newNote))
+        {
+            return;
+        }
+
+        await Notes.AddAsync(ItemType, ItemId, _newNote, AuthorName ?? "?", null);
+        _newNote = string.Empty;
+
+        await LoadAsync();
+    }
+
+    private async Task SaveEditAsync()
+    {
+        if (_editingId is not { } noteId || string.IsNullOrWhiteSpace(_editing))
+        {
+            return;
+        }
+
+        await Notes.UpdateAsync(noteId, _editing, AuthorName ?? "?");
+        _editingId = null;
+
+        await LoadAsync();
+    }
+
+    private async Task DeleteAsync(int noteId)
+    {
+        await Notes.DeleteAsync(noteId);
+        await LoadAsync();
+    }
+}

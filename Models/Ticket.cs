@@ -92,8 +92,55 @@ public class Ticket : IEntityScoped
 
     public DateTime OpenedAt { get; set; } = DateTime.UtcNow;
 
-    /// <summary>Échéance de traitement. Saisie à la main : les niveaux de service (SLA) n'existent pas encore.</summary>
+    /// <summary>
+    /// Échéance de traitement saisie à la main. Elle coexiste avec celles des niveaux de service
+    /// ci-dessous plutôt que d'être remplacée par elles : tout ticket n'a pas de SLA, et une date
+    /// posée à la main reste le moyen de s'engager sur un cas particulier.
+    /// </summary>
     public DateTime? DueDate { get; set; }
+
+    // Niveaux de service. Quatre engagements possibles, deux par deux : envers le demandeur (SLA)
+    // et en interne (OLA), sur la prise en charge (TTO) et sur la résolution (TTR). Les échéances
+    // sont calculées une fois, à la pose de l'engagement, et stockées : les recalculer à chaque
+    // affichage les ferait bouger au gré des modifications du calendrier, et une échéance qui se
+    // déplace n'engage plus personne.
+
+    public int? SlaTimeToOwnId { get; set; }
+    public ServiceLevelAgreement? SlaTimeToOwn { get; set; }
+
+    public int? SlaTimeToResolveId { get; set; }
+    public ServiceLevelAgreement? SlaTimeToResolve { get; set; }
+
+    public int? OlaTimeToOwnId { get; set; }
+    public ServiceLevelAgreement? OlaTimeToOwn { get; set; }
+
+    public int? OlaTimeToResolveId { get; set; }
+    public ServiceLevelAgreement? OlaTimeToResolve { get; set; }
+
+    /// <summary>Échéance de prise en charge due au demandeur.</summary>
+    public DateTime? TimeToOwn { get; set; }
+
+    /// <summary>Échéance de résolution due au demandeur.</summary>
+    public DateTime? TimeToResolve { get; set; }
+
+    /// <summary>Échéance interne de prise en charge.</summary>
+    public DateTime? InternalTimeToOwn { get; set; }
+
+    /// <summary>Échéance interne de résolution.</summary>
+    public DateTime? InternalTimeToResolve { get; set; }
+
+    /// <summary>
+    /// Moment où le ticket a été pris en charge — première attribution à un technicien. C'est ce
+    /// qui arrête le compteur de prise en charge ; une fois posé, il ne bouge plus, un ticket
+    /// réattribué ayant déjà été pris en charge.
+    /// </summary>
+    public DateTime? TakenIntoAccountAt { get; set; }
+
+    /// <summary>
+    /// Départ des compteurs internes (OLA). L'engagement interne court depuis l'attribution, pas
+    /// depuis l'ouverture : c'est ce qui le distingue du SLA.
+    /// </summary>
+    public DateTime? OlaStartedAt { get; set; }
 
     public DateTime? SolvedAt { get; set; }
     public DateTime? ClosedAt { get; set; }
@@ -110,9 +157,51 @@ public class Ticket : IEntityScoped
 
     /// <summary>
     /// Échéance dépassée sur un ticket encore ouvert : c'est ce qui doit sauter aux yeux dans une
-    /// liste, un ticket clos en retard n'étant plus actionnable.
+    /// liste, un ticket clos en retard n'étant plus actionnable. Les engagements de niveau de
+    /// service comptent au même titre que l'échéance saisie à la main.
     /// </summary>
-    public bool IsOverdue => IsOpen && DueDate is { } due && due < DateTime.Now;
+    /// <remarks>
+    /// <see cref="DueDate"/> se compare à l'heure locale, et non en UTC comme les échéances de
+    /// niveau de service : elle est saisie à la main dans un champ « datetime-local » et stockée
+    /// telle quelle. Deux référentiels pour deux provenances, tant que les dates saisies ne sont
+    /// pas converties à l'entrée.
+    /// </remarks>
+    public bool IsOverdue => IsOpen && (
+        (DueDate is { } due && due < DateTime.Now)
+        || IsTimeToOwnBreached
+        || IsTimeToResolveBreached);
+
+    /// <summary>
+    /// Prise en charge manquée : l'échéance est passée et personne n'avait encore pris le ticket.
+    /// Un ticket pris en charge à temps ne redevient jamais en faute, d'où la comparaison avec
+    /// <see cref="TakenIntoAccountAt"/> plutôt qu'avec l'heure courante seule.
+    ///
+    /// Comparaison en UTC, comme toutes celles qui suivent : les échéances de niveau de service et
+    /// les dates de prise en charge et de résolution sont posées en UTC. Les confronter à
+    /// <c>DateTime.Now</c> décalerait le constat de retard du fuseau — deux heures en été.
+    /// </summary>
+    public bool IsTimeToOwnBreached =>
+        TimeToOwn is { } deadline && (TakenIntoAccountAt ?? DateTime.UtcNow) > deadline;
+
+    /// <inheritdoc cref="IsTimeToOwnBreached"/>
+    public bool IsInternalTimeToOwnBreached =>
+        InternalTimeToOwn is { } deadline && (TakenIntoAccountAt ?? DateTime.UtcNow) > deadline;
+
+    /// <summary>
+    /// Résolution manquée. Le ticket résolu est jugé sur sa date de résolution, celui encore
+    /// ouvert sur l'heure courante.
+    /// </summary>
+    public bool IsTimeToResolveBreached =>
+        TimeToResolve is { } deadline && (SolvedAt ?? DateTime.UtcNow) > deadline;
+
+    /// <inheritdoc cref="IsTimeToResolveBreached"/>
+    public bool IsInternalTimeToResolveBreached =>
+        InternalTimeToResolve is { } deadline && (SolvedAt ?? DateTime.UtcNow) > deadline;
+
+    /// <summary>Le ticket porte-t-il un engagement, quel qu'il soit ?</summary>
+    public bool HasServiceLevel =>
+        SlaTimeToOwnId is not null || SlaTimeToResolveId is not null
+        || OlaTimeToOwnId is not null || OlaTimeToResolveId is not null;
 }
 
 /// <summary>

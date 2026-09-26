@@ -22,10 +22,12 @@ else
                 </tr>
             </thead>
             <tbody>
-                @foreach (HistoryRow row in Rows)
+                @* Ordre et écriture des dates selon les préférences (« Ordre de l'historique »,
+                   format, fuseau) : les pages passent leurs lignes dans n'importe quel ordre. *@
+                @foreach (HistoryRow row in Display.Chronological(Rows, row => row.OccurredAt))
                 {
                     <tr>
-                        <td class="text-secondary">@row.OccurredAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td class="text-secondary">@Display.DateTime(row.OccurredAt)</td>
                         <td class="text-secondary">@row.User</td>
                         <td>@row.Field</td>
                         <td class="text-secondary">@row.Description</td>

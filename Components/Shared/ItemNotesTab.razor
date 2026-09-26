@@ -51,12 +51,12 @@ else
                         <div class="text-secondary small">
                             <i class="ti ti-user me-1"></i>@note.AuthorName
                             <span class="ms-2">
-                                <i class="ti ti-calendar me-1"></i>@note.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                <i class="ti ti-calendar me-1"></i>@Display.DateTime(note.CreatedAt)
                             </span>
                             @if (note.UpdatedAt is { } updated)
                             {
                                 <span class="ms-2">
-                                    <i class="ti ti-pencil me-1"></i>Modifiée le @updated.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                    <i class="ti ti-pencil me-1"></i>Modifiée le @Display.DateTime(updated)
                                 </span>
                             }
                         </div>

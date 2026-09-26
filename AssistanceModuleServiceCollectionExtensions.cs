@@ -1,4 +1,6 @@
+using GlpiNg.Modules.Abstractions.Cron;
 using GlpiNg.Modules.Abstractions.Menu;
+using GlpiNg.Modules.Assistance.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GlpiNg.Modules.Assistance;
@@ -17,6 +19,14 @@ public static class AssistanceModuleServiceCollectionExtensions
     public static IServiceCollection AddAssistanceModule(this IServiceCollection services)
     {
         services.AddSingleton<IMenuProvider, AssistanceMenuProvider>();
+
+        // Pose les échéances des niveaux de service sur les tickets. Scoped parce qu'il consomme
+        // la fabrique de DbContext, elle-même Scoped.
+        services.AddScoped<ServiceLevelService>();
+
+        // Applique les niveaux d'escalade au fil du temps. Comme tout ICronTask, il est exécuté
+        // par le service cron de l'hôte et réglable depuis /config/automatic-actions.
+        services.AddScoped<ICronTask, ServiceLevelEscalationCronTask>();
 
         return services;
     }

@@ -1,0 +1,61 @@
+@* Changements rattachés à un ticket ou à un problème, en lecture : le rattachement se fait depuis la
+   fiche du changement, qui est l'écran où il se prépare — comme les problèmes sur la fiche ticket. *@
+
+<p class="text-secondary">@Intro</p>
+
+@if (Changes.Count == 0)
+{
+    <div class="glpi-config-placeholder">
+        <i class="ti ti-replace"></i>
+        <p class="mb-0">Aucun changement rattaché.</p>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-vcenter">
+            <thead>
+                <tr>
+                    <th style="width: 5rem;">N°</th>
+                    <th>Changement</th>
+                    <th>Statut</th>
+                    <th>Approbation</th>
+                    <th>Priorité</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (Change change in Changes)
+                {
+                    <tr>
+                        <td class="text-secondary">@change.Id</td>
+                        <td>
+                            <a href="@($"/assistance/changes/{change.Id}")" class="text-reset fw-semibold">
+                                <i class="ti ti-replace me-1 text-secondary"></i>@change.Name
+                            </a>
+                        </td>
+                        <td><span class="badge @ChangeLabels.BadgeFor(change.Status)">@ChangeLabels.For(change.Status)</span></td>
+                        <td>
+                            @if (change.GlobalValidation == ChangeValidationStatus.None)
+                            {
+                                <span class="text-secondary">—</span>
+                            }
+                            else
+                            {
+                                <span class="badge @ChangeLabels.BadgeFor(change.GlobalValidation)">@ChangeLabels.For(change.GlobalValidation)</span>
+                            }
+                        </td>
+                        <td><span class="badge @ItilLabels.BadgeFor(change.Priority)">@ItilLabels.For(change.Priority)</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<Change> Changes { get; set; } = [];
+
+    [Parameter, EditorRequired]
+    public string Intro { get; set; } = string.Empty;
+}

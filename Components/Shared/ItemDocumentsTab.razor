@@ -45,7 +45,7 @@ else
                         <td>@document.Name</td>
                         <td class="text-secondary">@document.FileName</td>
                         <td class="text-secondary">@FormatSize(document.SizeBytes)</td>
-                        <td class="text-secondary">@document.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td class="text-secondary">@Display.DateTime(document.CreatedAt)</td>
                         <td class="text-nowrap">
                             @if (!document.IsContentMissing)
                             {

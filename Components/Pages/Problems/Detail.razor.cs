@@ -34,6 +34,7 @@ public partial class Detail : ComponentBase
     private List<ItilTask> _tasks = [];
     private List<Ticket> _tickets = [];
     private List<Ticket> _ticketCandidates = [];
+    private List<Change> _changes = [];
     private List<HistoryRow> _history = [];
     private IReadOnlyList<PrincipalOption> _users = [];
     private IReadOnlyList<PrincipalOption> _groups = [];
@@ -72,6 +73,7 @@ public partial class Detail : ComponentBase
             yield return ("suivis", "Suivis", "ti-message", _followups.Count);
             yield return ("taches", "Tâches", "ti-checklist", _tasks.Count);
             yield return ("solution", "Solution", "ti-circle-check", null);
+            yield return ("changements", "Changements", "ti-replace", _changes.Count);
             yield return ("documents", "Documents", "ti-file", _documentCount);
             yield return ("notes", "Notes", "ti-notes", _noteCount);
             yield return ("historique", "Historique", "ti-history", _history.Count);
@@ -135,6 +137,13 @@ public partial class Detail : ComponentBase
             .AsNoTracking()
             .Where(ticket => !attached.Contains(ticket.Id))
             .OrderByDescending(ticket => ticket.OpenedAt)
+            .ToListAsync();
+
+        _changes = await db.Set<ChangeProblem>()
+            .AsNoTracking()
+            .Where(link => link.ProblemId == ProblemId)
+            .Select(link => link.Change!)
+            .OrderByDescending(change => change.OpenedAt)
             .ToListAsync();
 
         _categories = await db.Set<TicketCategory>()

@@ -1,7 +1,9 @@
+using System.Globalization;
 using BlazorBootstrap;
 using GlpiNg.Modules.Abstractions.Directory;
 using GlpiNg.Modules.Abstractions.Items;
 using GlpiNg.Modules.Assistance.Models;
+using GlpiNg.Modules.Assistance.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +27,9 @@ public partial class Detail : ComponentBase
     [Inject]
     private ToastService ToastService { get; set; } = null!;
 
+    [Inject]
+    private ServiceLevelService ServiceLevels { get; set; } = null!;
+
     [CascadingParameter]
     private Task<AuthenticationState>? AuthStateTask { get; set; }
 
@@ -33,6 +38,9 @@ public partial class Detail : ComponentBase
     private List<ItilFollowup> _followups = [];
     private List<ItilTask> _tasks = [];
     private List<Problem> _problems = [];
+    private List<Change> _changes = [];
+    private List<ServiceLevelAgreement> _agreements = [];
+    private List<TicketEscalation> _escalations = [];
     private List<HistoryRow> _history = [];
     private IReadOnlyList<PrincipalOption> _users = [];
     private IReadOnlyList<PrincipalOption> _groups = [];
@@ -43,6 +51,10 @@ public partial class Detail : ComponentBase
     private int _requesterId;
     private int _assignedUserId;
     private int _assignedGroupId;
+    private int _slaTtoId;
+    private int _slaTtrId;
+    private int _olaTtoId;
+    private int _olaTtrId;
 
     private string _newFollowup = string.Empty;
     private bool _newFollowupPrivate;
@@ -65,7 +77,9 @@ public partial class Detail : ComponentBase
             yield return ("suivis", "Suivis", "ti-message", _followups.Count);
             yield return ("taches", "Tâches", "ti-checklist", _tasks.Count);
             yield return ("solution", "Solution", "ti-circle-check", null);
+            yield return ("sla", "Niveaux de service", "ti-clipboard-check", null);
             yield return ("problemes", "Problèmes", "ti-bulb", _problems.Count);
+            yield return ("changements", "Changements", "ti-replace", _changes.Count);
             yield return ("documents", "Documents", "ti-file", _documentCount);
             yield return ("notes", "Notes", "ti-notes", _noteCount);
             yield return ("historique", "Historique", "ti-history", _history.Count);
@@ -118,10 +132,35 @@ public partial class Detail : ComponentBase
             .OrderByDescending(problem => problem.OpenedAt)
             .ToListAsync();
 
+        _changes = await db.Set<ChangeTicket>()
+            .AsNoTracking()
+            .Where(link => link.TicketId == TicketId)
+            .Select(link => link.Change!)
+            .OrderByDescending(change => change.OpenedAt)
+            .ToListAsync();
+
         _categoryId = _ticket.CategoryId ?? 0;
         _requesterId = _ticket.RequesterUserId ?? 0;
         _assignedUserId = _ticket.AssignedUserId ?? 0;
         _assignedGroupId = _ticket.AssignedGroupId ?? 0;
+        _slaTtoId = _ticket.SlaTimeToOwnId ?? 0;
+        _slaTtrId = _ticket.SlaTimeToResolveId ?? 0;
+        _olaTtoId = _ticket.OlaTimeToOwnId ?? 0;
+        _olaTtrId = _ticket.OlaTimeToResolveId ?? 0;
+
+        _agreements = await db.Set<ServiceLevelAgreement>()
+            .AsNoTracking()
+            .Include(agreement => agreement.ServiceLevel)
+            .OrderBy(agreement => agreement.ServiceLevel!.Name)
+            .ThenBy(agreement => agreement.Name)
+            .ToListAsync();
+
+        _escalations = await db.Set<TicketEscalation>()
+            .AsNoTracking()
+            .Where(entry => entry.TicketId == TicketId)
+            .Include(entry => entry.Escalation)
+            .OrderBy(entry => entry.ExecutedAt)
+            .ToListAsync();
 
         _categories = await db.Set<TicketCategory>()
             .AsNoTracking()
@@ -139,6 +178,33 @@ public partial class Detail : ComponentBase
 
         _users = await Directory.GetAsync(PrincipalKind.User);
         _groups = await Directory.GetAsync(PrincipalKind.Group);
+    }
+
+    private IEnumerable<ServiceLevelAgreement> AgreementsFor(ServiceLevelKind kind, ServiceLevelTarget target) =>
+        _agreements.Where(agreement => agreement.Kind == kind && agreement.Target == target);
+
+    /// <summary>« Support standard — 4 heure(s) » : le niveau, puis ce à quoi il engage.</summary>
+    private static string AgreementLabel(ServiceLevelAgreement agreement) =>
+        $"{agreement.ServiceLevel?.Name} — {agreement.Name} "
+        + $"({agreement.DurationValue} {ServiceLevelLabels.For(agreement.DurationUnit)})";
+
+    /// <summary>
+    /// Échéance telle qu'elle s'affiche, avec le retard dit plutôt que seulement coloré : une date
+    /// rouge n'apprend rien à qui ne connaît pas l'heure qu'il est.
+    /// </summary>
+    private MarkupString DeadlineDisplay(DateTime? deadline, bool breached)
+    {
+        if (deadline is null)
+        {
+            return new MarkupString("<span class=\"text-secondary\">—</span>");
+        }
+
+        string date = Display.DateTime(deadline.Value)!;
+
+        return breached
+            ? new MarkupString($"<span class=\"text-danger fw-semibold\">{date}</span> "
+                + "<span class=\"badge bg-danger-lt ms-1\">dépassée</span>")
+            : new MarkupString($"<span>{date}</span>");
     }
 
     private static string CategoryPath(TicketCategory category) =>
@@ -250,6 +316,21 @@ public partial class Detail : ComponentBase
             _ticket.RequesterUserId = _requesterId == 0 ? null : _requesterId;
             _ticket.AssignedUserId = _assignedUserId == 0 ? null : _assignedUserId;
             _ticket.AssignedGroupId = _assignedGroupId == 0 ? null : _assignedGroupId;
+            _ticket.SlaTimeToOwnId = _slaTtoId == 0 ? null : _slaTtoId;
+            _ticket.SlaTimeToResolveId = _slaTtrId == 0 ? null : _slaTtrId;
+            _ticket.OlaTimeToOwnId = _olaTtoId == 0 ? null : _olaTtoId;
+            _ticket.OlaTimeToResolveId = _olaTtrId == 0 ? null : _olaTtrId;
+
+            // Première attribution : le ticket est pris en charge, et le restera. Le rejouer à
+            // chaque réattribution ferait repartir le compteur et effacerait un retard constaté.
+            if (_ticket.TakenIntoAccountAt is null && _ticket.AssignedUserId is not null)
+            {
+                _ticket.TakenIntoAccountAt = DateTime.UtcNow;
+            }
+
+            // Les échéances sont recalculées ici, et seulement ici : l'engagement, l'attribution
+            // ou l'ouverture ont pu changer dans cette même sauvegarde.
+            await ServiceLevels.ApplyAsync(_ticket);
 
             AssistanceHistoryRecorder history = new(ItemTypes.Ticket, TicketId, _currentUserName);
 
@@ -266,6 +347,10 @@ public partial class Detail : ComponentBase
             history.Track("Technicien", ActorNameOf(stored.AssignedUserId), ActorNameOf(_ticket.AssignedUserId));
             history.Track("Groupe", GroupNameOf(stored.AssignedGroupId), GroupNameOf(_ticket.AssignedGroupId));
             history.Track("Échéance", stored.DueDate, _ticket.DueDate);
+            history.Track("SLA — prise en charge", AgreementNameOf(stored.SlaTimeToOwnId), AgreementNameOf(_ticket.SlaTimeToOwnId));
+            history.Track("SLA — résolution", AgreementNameOf(stored.SlaTimeToResolveId), AgreementNameOf(_ticket.SlaTimeToResolveId));
+            history.Track("OLA — prise en charge", AgreementNameOf(stored.OlaTimeToOwnId), AgreementNameOf(_ticket.OlaTimeToOwnId));
+            history.Track("OLA — résolution", AgreementNameOf(stored.OlaTimeToResolveId), AgreementNameOf(_ticket.OlaTimeToResolveId));
             history.Track("Solution", stored.Solution, _ticket.Solution);
             history.Track("Type de solution", stored.SolutionType, _ticket.SolutionType);
 
@@ -292,6 +377,16 @@ public partial class Detail : ComponentBase
             stored.SolutionType = _ticket.SolutionType;
             stored.SolvedAt = _ticket.SolvedAt;
             stored.ClosedAt = _ticket.ClosedAt;
+            stored.SlaTimeToOwnId = _ticket.SlaTimeToOwnId;
+            stored.SlaTimeToResolveId = _ticket.SlaTimeToResolveId;
+            stored.OlaTimeToOwnId = _ticket.OlaTimeToOwnId;
+            stored.OlaTimeToResolveId = _ticket.OlaTimeToResolveId;
+            stored.TimeToOwn = _ticket.TimeToOwn;
+            stored.TimeToResolve = _ticket.TimeToResolve;
+            stored.InternalTimeToOwn = _ticket.InternalTimeToOwn;
+            stored.InternalTimeToResolve = _ticket.InternalTimeToResolve;
+            stored.TakenIntoAccountAt = _ticket.TakenIntoAccountAt;
+            stored.OlaStartedAt = _ticket.OlaStartedAt;
 
             if (history.HasChanges)
             {
@@ -336,6 +431,13 @@ public partial class Detail : ComponentBase
         categoryId is { } id ? _categories.FirstOrDefault(category => category.Id == id)?.Name : null;
 
     private string? ActorNameOf(int? userId) => userId is { } id ? NameOfUser(id) : null;
+
+    private string? AgreementNameOf(int? agreementId) =>
+        agreementId is { } id
+            ? _agreements.FirstOrDefault(agreement => agreement.Id == id) is { } agreement
+                ? AgreementLabel(agreement)
+                : $"#{id} (supprimé)"
+            : null;
 
     private string? GroupNameOf(int? groupId) =>
         groupId is { } id ? _groups.FirstOrDefault(group => group.Id == id)?.Name ?? $"#{id} (supprimé)" : null;

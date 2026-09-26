@@ -15,7 +15,21 @@ else
                 <i class="ti @(_ticket.Type == TicketType.Incident ? "ti-alert-circle" : "ti-help-circle") me-2"></i>
                 <span class="text-secondary">#@_ticket.Id</span> @_ticket.Name
                 <span class="badge @TicketLabels.BadgeFor(_ticket.Status) ms-2">@TicketLabels.For(_ticket.Status)</span>
-                @if (_ticket.IsOverdue)
+                @* Le retard d'un engagement se nomme : « en retard » sans dire sur quoi laisse
+                   chercher entre l'échéance saisie à la main et les quatre du niveau de service. *@
+                @if (_ticket.IsTimeToOwnBreached || _ticket.IsInternalTimeToOwnBreached)
+                {
+                    <span class="badge bg-danger-lt ms-1" title="Délai de prise en charge dépassé">
+                        Prise en charge en retard
+                    </span>
+                }
+                @if (_ticket.IsTimeToResolveBreached || _ticket.IsInternalTimeToResolveBreached)
+                {
+                    <span class="badge bg-danger-lt ms-1" title="Délai de résolution dépassé">
+                        Résolution en retard
+                    </span>
+                }
+                else if (_ticket.IsOverdue)
                 {
                     <span class="badge bg-danger-lt ms-1">En retard</span>
                 }
@@ -228,14 +242,14 @@ else
                                 <div class="glpi-fiche-field">
                                     <label>Ouvert le</label>
                                     <input class="form-control" disabled
-                                           value="@_ticket.OpenedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")" />
+                                           value="@Display.DateTime(_ticket.OpenedAt)" />
                                 </div>
                                 @if (_ticket.SolvedAt is { } solved)
                                 {
                                     <div class="glpi-fiche-field">
                                         <label>Résolu le</label>
                                         <input class="form-control" disabled
-                                               value="@solved.ToLocalTime().ToString("dd/MM/yyyy HH:mm")" />
+                                               value="@Display.DateTime(solved)" />
                                     </div>
                                 }
                             </div>
@@ -272,7 +286,7 @@ else
                         }
                         else
                         {
-                            @foreach (ItilFollowup followup in _followups)
+                            @foreach (ItilFollowup followup in Display.Chronological(_followups, followup => followup.CreatedAt))
                             {
                                 <div class="card mb-2 @(followup.IsPrivate ? "border-warning" : "")">
                                     <div class="card-body">
@@ -281,7 +295,7 @@ else
                                             <div class="text-secondary small">
                                                 <i class="ti ti-user me-1"></i>@followup.AuthorName
                                                 <span class="ms-2">
-                                                    <i class="ti ti-calendar me-1"></i>@followup.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                                    <i class="ti ti-calendar me-1"></i>@Display.DateTime(followup.CreatedAt)
                                                 </span>
                                                 @if (followup.IsPrivate)
                                                 {
@@ -373,7 +387,7 @@ else
                                                     @(task.AssignedUserId is { } id ? NameOfUser(id) : "—")
                                                 </td>
                                                 <td class="text-secondary">
-                                                    @(task.PlannedStart?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "—")
+                                                    @(Display.LocalDateTime(task.PlannedStart) ?? "—")
                                                 </td>
                                                 <td class="text-secondary">
                                                     @(task.DurationMinutes is { } minutes ? $"{minutes} min" : "—")
@@ -396,7 +410,7 @@ else
                         @if (_ticket.Status is TicketStatus.Solved or TicketStatus.Closed)
                         {
                             string solvedOn = _ticket.SolvedAt is { } date
-                                ? $" le {date.ToLocalTime():dd/MM/yyyy HH:mm}"
+                                ? $" le {Display.DateTime(date)}"
                                 : string.Empty;
 
                             <div class="alert alert-success">
@@ -430,6 +444,156 @@ else
                             <button type="button" class="btn" @onclick="CloseAsync">
                                 <i class="ti ti-lock me-1"></i>Clore le ticket
                             </button>
+                        }
+                        break;
+
+                    case "sla":
+                        <p class="text-secondary">
+                            Les engagements de délai portés par ce ticket. Le <strong>SLA</strong>
+                            se compte depuis l'ouverture — c'est ce que le demandeur constate ;
+                            l'<strong>OLA</strong> depuis l'attribution — c'est ce que l'équipe se
+                            doit.
+                        </p>
+
+                        @if (_agreements.Count == 0)
+                        {
+                            <div class="glpi-config-placeholder">
+                                <i class="ti ti-clipboard-off"></i>
+                                <p class="mb-1">Aucun engagement n'est défini.</p>
+                                <a href="/config/service-levels">Créer un niveau de service</a>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h4 class="mb-2">SLA — envers le demandeur</h4>
+
+                                    <div class="glpi-fiche-field">
+                                        <label>Prise en charge</label>
+                                        <select class="form-select" @bind="_slaTtoId">
+                                            <option value="0">—</option>
+                                            @foreach (ServiceLevelAgreement agreement in AgreementsFor(ServiceLevelKind.Sla, ServiceLevelTarget.TimeToOwn))
+                                            {
+                                                <option value="@agreement.Id">@AgreementLabel(agreement)</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="glpi-fiche-field">
+                                        <label>Échéance</label>
+                                        <div class="glpi-fiche-value-box px-2">
+                                            @DeadlineDisplay(_ticket.TimeToOwn, _ticket.IsTimeToOwnBreached)
+                                        </div>
+                                    </div>
+
+                                    <div class="glpi-fiche-field">
+                                        <label>Résolution</label>
+                                        <select class="form-select" @bind="_slaTtrId">
+                                            <option value="0">—</option>
+                                            @foreach (ServiceLevelAgreement agreement in AgreementsFor(ServiceLevelKind.Sla, ServiceLevelTarget.TimeToResolve))
+                                            {
+                                                <option value="@agreement.Id">@AgreementLabel(agreement)</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="glpi-fiche-field">
+                                        <label>Échéance</label>
+                                        <div class="glpi-fiche-value-box px-2">
+                                            @DeadlineDisplay(_ticket.TimeToResolve, _ticket.IsTimeToResolveBreached)
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <h4 class="mb-2">OLA — interne</h4>
+
+                                    <div class="glpi-fiche-field">
+                                        <label>Prise en charge</label>
+                                        <select class="form-select" @bind="_olaTtoId">
+                                            <option value="0">—</option>
+                                            @foreach (ServiceLevelAgreement agreement in AgreementsFor(ServiceLevelKind.Ola, ServiceLevelTarget.TimeToOwn))
+                                            {
+                                                <option value="@agreement.Id">@AgreementLabel(agreement)</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="glpi-fiche-field">
+                                        <label>Échéance</label>
+                                        <div class="glpi-fiche-value-box px-2">
+                                            @DeadlineDisplay(_ticket.InternalTimeToOwn, _ticket.IsInternalTimeToOwnBreached)
+                                        </div>
+                                    </div>
+
+                                    <div class="glpi-fiche-field">
+                                        <label>Résolution</label>
+                                        <select class="form-select" @bind="_olaTtrId">
+                                            <option value="0">—</option>
+                                            @foreach (ServiceLevelAgreement agreement in AgreementsFor(ServiceLevelKind.Ola, ServiceLevelTarget.TimeToResolve))
+                                            {
+                                                <option value="@agreement.Id">@AgreementLabel(agreement)</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="glpi-fiche-field">
+                                        <label>Échéance</label>
+                                        <div class="glpi-fiche-value-box px-2">
+                                            @DeadlineDisplay(_ticket.InternalTimeToResolve, _ticket.IsInternalTimeToResolveBreached)
+                                        </div>
+                                    </div>
+
+                                    @if ((_olaTtoId != 0 || _olaTtrId != 0) && _ticket.OlaStartedAt is null)
+                                    {
+                                        <p class="hint text-warning">
+                                            Le ticket n'est attribué à personne : le compteur interne
+                                            n'a pas démarré.
+                                        </p>
+                                    }
+                                </div>
+                            </div>
+
+                            <hr />
+
+                            <div class="glpi-fiche-field">
+                                <label>Pris en charge le</label>
+                                <div class="glpi-fiche-value-box px-2">
+                                    @(_ticket.TakenIntoAccountAt is { } taken
+                                        ? Display.DateTime(taken)
+                                        : "Pas encore")
+                                </div>
+                            </div>
+                            <p class="hint">
+                                Posé à la première attribution du ticket, et jamais rejoué : un
+                                ticket réattribué a déjà été pris en charge. Les échéances sont
+                                recalculées à l'enregistrement de la fiche.
+                            </p>
+
+                            @if (_escalations.Count > 0)
+                            {
+                                <h4 class="mt-3 mb-2">Escalades appliquées</h4>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter">
+                                        <thead>
+                                            <tr>
+                                                <th>Niveau</th>
+                                                <th>Déclenchement</th>
+                                                <th>Appliqué le</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (TicketEscalation entry in _escalations)
+                                            {
+                                                <tr>
+                                                    <td>@(entry.Escalation?.Name ?? "—")</td>
+                                                    <td class="text-secondary">@(entry.Escalation?.OffsetLabel ?? "—")</td>
+                                                    <td class="text-secondary">
+                                                        @Display.DateTime(entry.ExecutedAt)
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
                         }
                         break;
 
@@ -484,6 +648,11 @@ else
                                 </table>
                             </div>
                         }
+                        break;
+
+                    case "changements":
+                        <LinkedChangesTab Changes="_changes"
+                                          Intro="Changements à l'origine desquels est ce ticket, ou qui viennent le régler. Le rattachement se fait depuis la fiche du changement." />
                         break;
 
                     case "documents":

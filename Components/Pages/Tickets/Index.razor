@@ -117,11 +117,21 @@
                             <td class="text-secondary">@ticket.Category?.Name</td>
                             <td class="text-secondary">@RequesterOf(ticket)</td>
                             <td class="text-secondary">@AssigneeOf(ticket)</td>
-                            <td class="text-secondary">@ticket.OpenedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="text-secondary">@Display.DateTime(ticket.OpenedAt)</td>
                             <td class="@(ticket.IsOverdue ? "text-danger fw-semibold" : "text-secondary")">
                                 @* Une échéance dépassée sur un ticket encore ouvert est la seule
-                                   information de cette liste qui appelle une action immédiate. *@
-                                @(ticket.DueDate?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "—")
+                                   information de cette liste qui appelle une action immédiate.
+                                   À défaut d'échéance saisie à la main, celle du SLA de résolution
+                                   tient ce rôle — c'est la même promesse, faite autrement. *@
+                                @* Deux provenances, deux référentiels : l'échéance saisie est une heure murale,
+                                   celle du SLA un instant UTC (voir Ticket.IsOverdue). *@
+                                @(ticket.DueDate is { } due
+                                    ? Display.LocalDateTime(due)
+                                    : Display.DateTime(ticket.TimeToResolve) ?? "—")
+                                @if (ticket.DueDate is null && ticket.TimeToResolve is not null)
+                                {
+                                    <span class="badge bg-blue-lt ms-1" title="Échéance du niveau de service">SLA</span>
+                                }
                             </td>
                         </tr>
                     }

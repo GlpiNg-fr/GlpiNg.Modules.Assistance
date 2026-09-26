@@ -1,0 +1,63 @@
+@using GlpiNg.Modules.Assistance.Services
+
+@* Une répartition des statistiques : ouverts et résolus sur la période, délai moyen de résolution.
+   La barre ne double que la colonne « Ouverts » — une seule mesure par barre, à la même échelle
+   pour toutes les lignes, pour que les longueurs se comparent d'un coup d'œil. *@
+
+<div class="card glpi-stats-breakdown">
+    <div class="card-header">
+        <h3 class="card-title">@Title</h3>
+    </div>
+    @if (Rows.Count == 0 || Rows.All(row => row.Opened == 0 && row.Solved == 0))
+    {
+        <div class="card-body text-secondary small">Rien sur la période.</div>
+    }
+    else
+    {
+        int max = Rows.Max(row => row.Opened);
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table mb-0">
+                <thead>
+                    <tr>
+                        <th>@DimensionLabel</th>
+                        <th class="text-end" style="width: 38%;">Ouverts</th>
+                        <th class="text-end">Résolus</th>
+                        <th class="text-end">Délai moyen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (StatBreakdownRow row in Rows)
+                    {
+                        <tr>
+                            <td class="text-truncate" style="max-width: 14rem;" title="@row.Label">@row.Label</td>
+                            <td>
+                                <div class="glpi-stats-barcell">
+                                    <span class="glpi-stats-bartrack">
+                                        <span class="glpi-stats-bar" style="width: @BarWidth(row.Opened, max);"></span>
+                                    </span>
+                                    <span class="glpi-stats-num">@row.Opened</span>
+                                </div>
+                            </td>
+                            <td class="text-end glpi-stats-num">@row.Solved</td>
+                            <td class="text-end glpi-stats-num text-secondary">@ItilStatistics.FormatDuration(row.AverageResolution)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string DimensionLabel { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public IReadOnlyList<StatBreakdownRow> Rows { get; set; } = [];
+
+    private static string BarWidth(int value, int max) =>
+        max == 0 ? "0%" : FormattableString.Invariant($"{value * 100.0 / max:0.#}%");
+}

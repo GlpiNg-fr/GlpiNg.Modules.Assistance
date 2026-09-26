@@ -1,32 +1,39 @@
-@page "/assistance/problems/{ProblemId:int}"
+@page "/assistance/changes/{ChangeId:int}"
 @rendermode InteractiveServer
 
-<PageTitle>@(_problem is null ? "Problème" : $"#{_problem.Id} {_problem.Name}") — GlpiNg</PageTitle>
+<PageTitle>@(_change is null ? "Changement" : $"#{_change.Id} {_change.Name}") — GlpiNg</PageTitle>
 
-@if (_problem is null)
+@if (_change is null)
 {
-    <div class="card"><div class="card-body text-center text-secondary py-5">Problème introuvable.</div></div>
+    <div class="card"><div class="card-body text-center text-secondary py-5">Changement introuvable.</div></div>
 }
 else
 {
     <div class="glpi-fiche">
         <div class="glpi-fiche-header d-flex align-items-center justify-content-between">
             <h2 class="mb-0">
-                <i class="ti ti-bulb me-2"></i>
-                <span class="text-secondary">#@_problem.Id</span> @_problem.Name
-                <span class="badge @ProblemLabels.BadgeFor(_problem.Status) ms-2">@ProblemLabels.For(_problem.Status)</span>
-                @if (_problem.IsOverdue)
+                <i class="ti ti-replace me-2"></i>
+                <span class="text-secondary">#@_change.Id</span> @_change.Name
+                <span class="badge @ChangeLabels.BadgeFor(_change.Status) ms-2">@ChangeLabels.For(_change.Status)</span>
+                @if (_change.GlobalValidation != ChangeValidationStatus.None)
+                {
+                    <span class="badge @ChangeLabels.BadgeFor(_change.GlobalValidation) ms-1"
+                          title="État global des approbations">
+                        <i class="ti ti-gavel me-1"></i>@ChangeLabels.For(_change.GlobalValidation)
+                    </span>
+                }
+                @if (_change.IsOverdue)
                 {
                     <span class="badge bg-danger-lt ms-1">En retard</span>
                 }
             </h2>
             <div class="btn-list">
-                <a class="btn" href="/assistance/problems"><i class="ti ti-arrow-left me-1"></i>Retour à la liste</a>
+                <a class="btn" href="/assistance/changes"><i class="ti ti-arrow-left me-1"></i>Retour à la liste</a>
 
-                @if (_problem.IsOpen)
+                @if (_change.IsOpen)
                 {
                     <button type="button" class="btn btn-success" @onclick="@(() => _activeTab = "solution")">
-                        <i class="ti ti-check me-1"></i>Résoudre
+                        <i class="ti ti-check me-1"></i>Appliquer
                     </button>
                 }
                 else
@@ -43,8 +50,8 @@ else
                     </button>
                     <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 300px;">
                         <p class="mb-2">
-                            Supprimer ce problème, ses suivis et ses tâches ? Les incidents rattachés
-                            ne sont pas supprimés, seulement détachés.
+                            Supprimer ce changement, ses suivis, tâches et approbations ? Les tickets et
+                            problèmes rattachés ne sont pas supprimés, seulement détachés.
                         </p>
                         <div class="d-flex justify-content-end gap-2">
                             <button type="button" class="btn btn-sm">Annuler</button>
@@ -87,18 +94,18 @@ else
                             <div class="col-md-6">
                                 <div class="glpi-fiche-field">
                                     <label>Titre<span class="text-danger ms-1">*</span></label>
-                                    <input class="form-control" @bind="_problem.Name" />
+                                    <input class="form-control" @bind="_change.Name" />
                                 </div>
                                 <div class="glpi-fiche-field">
-                                    <label>Énoncé</label>
-                                    <textarea class="form-control" rows="6" @bind="_problem.Content"></textarea>
+                                    <label>Description</label>
+                                    <textarea class="form-control" rows="6" @bind="_change.Content"></textarea>
                                 </div>
                                 <div class="glpi-fiche-field">
                                     <label>Statut</label>
-                                    <select class="form-select" value="@((int)_problem.Status)" @onchange="OnStatusChanged">
-                                        @foreach (ProblemStatus status in ProblemLabels.Lifecycle)
+                                    <select class="form-select" value="@((int)_change.Status)" @onchange="OnStatusChanged">
+                                        @foreach (ChangeStatus status in ChangeLabels.Lifecycle)
                                         {
-                                            <option value="@((int)status)">@ProblemLabels.For(status)</option>
+                                            <option value="@((int)status)">@ChangeLabels.For(status)</option>
                                         }
                                     </select>
                                 </div>
@@ -151,7 +158,7 @@ else
                                     <div class="col-6">
                                         <div class="glpi-fiche-field">
                                             <label>Urgence</label>
-                                            <select class="form-select" value="@((int)_problem.Urgency)"
+                                            <select class="form-select" value="@((int)_change.Urgency)"
                                                     @onchange="OnUrgencyChanged">
                                                 @foreach (ItilLevel level in Enum.GetValues<ItilLevel>())
                                                 {
@@ -163,7 +170,7 @@ else
                                     <div class="col-6">
                                         <div class="glpi-fiche-field">
                                             <label>Impact</label>
-                                            <select class="form-select" value="@((int)_problem.Impact)"
+                                            <select class="form-select" value="@((int)_change.Impact)"
                                                     @onchange="OnImpactChanged">
                                                 @foreach (ItilLevel level in Enum.GetValues<ItilLevel>())
                                                 {
@@ -177,20 +184,20 @@ else
                                 <div class="glpi-fiche-field">
                                     <label>
                                         Priorité
-                                        @if (!_problem.IsPriorityManual)
+                                        @if (!_change.IsPriorityManual)
                                         {
                                             <span class="text-secondary ms-1">(calculée)</span>
                                         }
                                     </label>
                                     <div class="d-flex align-items-center gap-2">
-                                        <select class="form-select" value="@((int)_problem.Priority)"
+                                        <select class="form-select" value="@((int)_change.Priority)"
                                                 @onchange="OnPriorityChanged">
                                             @foreach (ItilLevel level in Enum.GetValues<ItilLevel>())
                                             {
                                                 <option value="@((int)level)">@ItilLabels.For(level)</option>
                                             }
                                         </select>
-                                        @if (_problem.IsPriorityManual)
+                                        @if (_change.IsPriorityManual)
                                         {
                                             <button type="button" class="btn btn-sm text-nowrap" @onclick="ResetPriority"
                                                     title="Revenir à la priorité déduite de l'urgence et de l'impact">
@@ -199,24 +206,24 @@ else
                                         }
                                     </div>
                                 </div>
-                                @if (_problem.IsPriorityManual)
+                                @if (_change.IsPriorityManual)
                                 {
                                     <p class="hint">Forcée à la main : elle ne suivra plus l'urgence ni l'impact.</p>
                                 }
 
                                 <div class="glpi-fiche-field">
                                     <label>Échéance</label>
-                                    <input class="form-control" type="datetime-local" @bind="_problem.DueDate" />
+                                    <input class="form-control" type="datetime-local" @bind="_change.DueDate" />
                                 </div>
                                 <div class="glpi-fiche-field">
                                     <label>Ouvert le</label>
                                     <input class="form-control" disabled
-                                           value="@Display.DateTime(_problem.OpenedAt)" />
+                                           value="@Display.DateTime(_change.OpenedAt)" />
                                 </div>
-                                @if (_problem.SolvedAt is { } solved)
+                                @if (_change.SolvedAt is { } solved)
                                 {
                                     <div class="glpi-fiche-field">
-                                        <label>Résolu le</label>
+                                        <label>Appliqué le</label>
                                         <input class="form-control" disabled
                                                value="@Display.DateTime(solved)" />
                                     </div>
@@ -227,49 +234,183 @@ else
 
                     case "analyse":
                         <p class="text-secondary">
-                            L'analyse en trois temps : ce qui se constate, ce qui l'explique, ce que
-                            ça coûte. C'est ce qui distingue un problème d'un incident — l'incident
-                            se répare, le problème se comprend.
+                            Avant de toucher à ce qui marche : ce que le changement impacte, et ce
+                            qu'on vérifie pour s'assurer qu'il est sans risque.
                         </p>
 
                         <div class="glpi-fiche-field">
-                            <label>Symptômes</label>
-                            <textarea class="form-control" rows="5" placeholder="Ce que rapportent les incidents…"
-                                      @bind="_problem.SymptomContent"></textarea>
+                            <label>Impacts</label>
+                            <textarea class="form-control" rows="6"
+                                      placeholder="Services, utilisateurs, dépendances touchés ; interruption prévue…"
+                                      @bind="_change.ImpactContent"></textarea>
                         </div>
                         <div class="glpi-fiche-field">
-                            <label>Cause</label>
-                            <textarea class="form-control" rows="5" placeholder="La cause racine, une fois trouvée…"
-                                      @bind="_problem.CauseContent"></textarea>
+                            <label>Liste de contrôle</label>
+                            <textarea class="form-control" rows="6"
+                                      placeholder="Ce qu'on vérifie avant de décider : prérequis, compatibilité, sauvegardes…"
+                                      @bind="_change.ControlListContent"></textarea>
                         </div>
-                        <div class="glpi-fiche-field">
-                            <label>Conséquences</label>
-                            <textarea class="form-control" rows="5" placeholder="Périmètre touché tant que le problème dure…"
-                                      @bind="_problem.ImpactContent"></textarea>
-                        </div>
-                        <div class="glpi-fiche-field">
-                            <label>Contournement</label>
-                            <textarea class="form-control" rows="5"
-                                      placeholder="Ce qui rend le service acceptable en attendant le correctif…"
-                                      @bind="_problem.Workaround"></textarea>
-                        </div>
-                        <p class="hint">
-                            Le contournement s'applique aux incidents en cours ; la solution, plus
-                            bas, traite la cause.
-                        </p>
                         break;
 
-                    case "incidents":
+                    case "plans":
                         <p class="text-secondary">
-                            Les incidents que ce problème explique. C'est ce rattachement qui donne
-                            sa mesure au problème : sans lui, rien ne dit combien de monde il touche.
+                            Comment on l'applique, comment on revient en arrière si ça tourne mal, et
+                            ce qu'on coche le jour J.
+                        </p>
+
+                        <div class="glpi-fiche-field">
+                            <label>Plan de déploiement</label>
+                            <textarea class="form-control" rows="6"
+                                      placeholder="Étapes d'application, ordre, fenêtre d'intervention…"
+                                      @bind="_change.RolloutPlanContent"></textarea>
+                        </div>
+                        <div class="glpi-fiche-field">
+                            <label>Plan de retour arrière</label>
+                            <textarea class="form-control" rows="6"
+                                      placeholder="Comment revenir à l'état d'avant, et à partir de quand le décider…"
+                                      @bind="_change.BackoutPlanContent"></textarea>
+                        </div>
+                        <div class="glpi-fiche-field">
+                            <label>Checklist</label>
+                            <textarea class="form-control" rows="6"
+                                      placeholder="Les points à cocher pendant et après l'application…"
+                                      @bind="_change.ChecklistContent"></textarea>
+                        </div>
+                        break;
+
+                    case "approbations":
+                        <p class="text-secondary">
+                            Un changement se fait approuver avant d'être appliqué. Un refus suffit à le
+                            refuser ; il faut l'accord de chaque approbateur pour qu'il soit accepté.
+                        </p>
+
+                        @if (_change.GlobalValidation == ChangeValidationStatus.Refused)
+                        {
+                            <div class="alert alert-danger">
+                                Approbation refusée : revoyez le changement, ou demandez une nouvelle approbation.
+                            </div>
+                        }
+                        else if (_change.GlobalValidation == ChangeValidationStatus.Accepted)
+                        {
+                            <div class="alert alert-success">Changement approuvé par tous les approbateurs sollicités.</div>
+                        }
+
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Approbateur</label>
+                                        <select class="form-select" @bind="_validatorToRequest">
+                                            <option value="0">—</option>
+                                            @foreach (var user in _users)
+                                            {
+                                                <option value="@user.Id">@user.Name</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Commentaire de la demande</label>
+                                        <input class="form-control" @bind="_validationRequestComment" @bind:event="oninput"
+                                               placeholder="Ce sur quoi l'avis est attendu…" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-primary w-100"
+                                                disabled="@(_validatorToRequest == 0 || _validatorAlreadyWaiting)" @onclick="RequestValidationAsync">
+                                            <i class="ti ti-send me-1"></i>Demander
+                                        </button>
+                                    </div>
+                                </div>
+                                @if (_validatorAlreadyWaiting)
+                                {
+                                    <p class="hint text-warning mt-2 mb-0">
+                                        Une approbation de cet utilisateur est déjà en attente.
+                                    </p>
+                                }
+                            </div>
+                        </div>
+
+                        @if (_validations.Count == 0)
+                        {
+                            <div class="glpi-config-placeholder">
+                                <i class="ti ti-gavel"></i>
+                                <p class="mb-0">Aucune approbation demandée.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (ChangeValidation validation in _validations)
+                            {
+                                <div class="card mb-2">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <div>
+                                                <span class="fw-semibold"><i class="ti ti-user me-1"></i>@NameOfUser(validation.ValidatorUserId)</span>
+                                                <span class="badge @ChangeLabels.BadgeFor(validation.Status) ms-2">@ChangeLabels.For(validation.Status)</span>
+                                            </div>
+                                            @if (validation.Status == ChangeValidationStatus.Waiting)
+                                            {
+                                                <button type="button" class="btn btn-icon btn-sm text-danger" title="Retirer la demande"
+                                                        @onclick="() => DeleteValidationAsync(validation.Id)">
+                                                    <i class="ti ti-trash"></i>
+                                                </button>
+                                            }
+                                        </div>
+                                        <div class="text-secondary small mt-1">
+                                            Demandée par @(validation.RequesterName ?? "?") le
+                                            @Display.DateTime(validation.SubmittedAt)
+                                        </div>
+                                        @if (!string.IsNullOrWhiteSpace(validation.RequestComment))
+                                        {
+                                            <div class="mt-2" style="white-space: pre-wrap;">@validation.RequestComment</div>
+                                        }
+
+                                        @if (validation.ValidatedAt is { } answeredAt)
+                                        {
+                                            <div class="border-top mt-2 pt-2">
+                                                <div class="text-secondary small">
+                                                    Réponse le @Display.DateTime(answeredAt)
+                                                </div>
+                                                @if (!string.IsNullOrWhiteSpace(validation.ValidationComment))
+                                                {
+                                                    <div style="white-space: pre-wrap;">@validation.ValidationComment</div>
+                                                }
+                                            </div>
+                                        }
+                                        else if (validation.ValidatorUserId == _currentUserId)
+                                        {
+                                            @* Seul l'approbateur désigné répond : une approbation donnée par un autre
+                                               n'en serait pas une. *@
+                                            <div class="border-top mt-2 pt-2">
+                                                <textarea class="form-control mb-2" rows="2" placeholder="Votre réponse (obligatoire pour un refus)…"
+                                                          value="@_answers.GetValueOrDefault(validation.Id)"
+                                                          @oninput="@(e => _answers[validation.Id] = e.Value?.ToString() ?? string.Empty)"></textarea>
+                                                <button type="button" class="btn btn-success btn-sm"
+                                                        @onclick="() => AnswerValidationAsync(validation.Id, ChangeValidationStatus.Accepted)">
+                                                    <i class="ti ti-check me-1"></i>Accepter
+                                                </button>
+                                                <button type="button" class="btn btn-danger btn-sm ms-1"
+                                                        disabled="@string.IsNullOrWhiteSpace(_answers.GetValueOrDefault(validation.Id))"
+                                                        @onclick="() => AnswerValidationAsync(validation.Id, ChangeValidationStatus.Refused)">
+                                                    <i class="ti ti-x me-1"></i>Refuser
+                                                </button>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
+                        break;
+
+                    case "tickets":
+                        <p class="text-secondary">
+                            Les tickets à l'origine de ce changement, ou qu'il vient régler.
                         </p>
 
                         <div class="card mb-3">
                             <div class="card-body">
                                 <div class="row g-2 align-items-end">
                                     <div class="col-md-10">
-                                        <label class="form-label">Rattacher un incident</label>
+                                        <label class="form-label">Rattacher un ticket</label>
                                         <select class="form-select" @bind="_ticketToAttach">
                                             <option value="0">—</option>
                                             @foreach (Ticket candidate in _ticketCandidates)
@@ -287,12 +428,6 @@ else
                                         </button>
                                     </div>
                                 </div>
-                                @if (_ticketCandidates.Count == 0)
-                                {
-                                    <p class="hint mt-2 mb-0">
-                                        Aucun incident à rattacher : tous ceux qui existent le sont déjà.
-                                    </p>
-                                }
                             </div>
                         </div>
 
@@ -300,7 +435,7 @@ else
                         {
                             <div class="glpi-config-placeholder">
                                 <i class="ti ti-ticket-off"></i>
-                                <p class="mb-0">Aucun incident rattaché.</p>
+                                <p class="mb-0">Aucun ticket rattaché.</p>
                             </div>
                         }
                         else
@@ -323,23 +458,11 @@ else
                                             <tr>
                                                 <td class="text-secondary">@ticket.Id</td>
                                                 <td>
-                                                    <a href="@($"/assistance/tickets/{ticket.Id}")" class="text-reset fw-semibold">
-                                                        @ticket.Name
-                                                    </a>
+                                                    <a href="@($"/assistance/tickets/{ticket.Id}")" class="text-reset fw-semibold">@ticket.Name</a>
                                                 </td>
-                                                <td>
-                                                    <span class="badge @TicketLabels.BadgeFor(ticket.Status)">
-                                                        @TicketLabels.For(ticket.Status)
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <span class="badge @ItilLabels.BadgeFor(ticket.Priority)">
-                                                        @ItilLabels.For(ticket.Priority)
-                                                    </span>
-                                                </td>
-                                                <td class="text-secondary">
-                                                    @Display.DateTime(ticket.OpenedAt)
-                                                </td>
+                                                <td><span class="badge @TicketLabels.BadgeFor(ticket.Status)">@TicketLabels.For(ticket.Status)</span></td>
+                                                <td><span class="badge @ItilLabels.BadgeFor(ticket.Priority)">@ItilLabels.For(ticket.Priority)</span></td>
+                                                <td class="text-secondary">@Display.DateTime(ticket.OpenedAt)</td>
                                                 <td>
                                                     <button type="button" class="btn btn-icon btn-sm text-danger" title="Détacher"
                                                             @onclick="() => DetachTicketAsync(ticket.Id)">
@@ -354,9 +477,87 @@ else
                         }
                         break;
 
+                    case "problemes":
+                        <p class="text-secondary">
+                            Les problèmes dont ce changement traite la cause.
+                        </p>
+
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-10">
+                                        <label class="form-label">Rattacher un problème</label>
+                                        <select class="form-select" @bind="_problemToAttach">
+                                            <option value="0">—</option>
+                                            @foreach (Problem candidate in _problemCandidates)
+                                            {
+                                                <option value="@candidate.Id">
+                                                    #@candidate.Id @candidate.Name (@ProblemLabels.For(candidate.Status))
+                                                </option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-primary w-100"
+                                                disabled="@(_problemToAttach == 0)" @onclick="AttachProblemAsync">
+                                            <i class="ti ti-link me-1"></i>Rattacher
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (_problems.Count == 0)
+                        {
+                            <div class="glpi-config-placeholder">
+                                <i class="ti ti-bulb-off"></i>
+                                <p class="mb-0">Aucun problème rattaché.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-vcenter">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 5rem;">N°</th>
+                                            <th>Titre</th>
+                                            <th>Statut</th>
+                                            <th>Priorité</th>
+                                            <th>Ouvert le</th>
+                                            <th style="width: 3rem;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (Problem problem in _problems)
+                                        {
+                                            <tr>
+                                                <td class="text-secondary">@problem.Id</td>
+                                                <td>
+                                                    <a href="@($"/assistance/problems/{problem.Id}")" class="text-reset fw-semibold">
+                                                        <i class="ti ti-bulb me-1 text-secondary"></i>@problem.Name
+                                                    </a>
+                                                </td>
+                                                <td><span class="badge @ProblemLabels.BadgeFor(problem.Status)">@ProblemLabels.For(problem.Status)</span></td>
+                                                <td><span class="badge @ItilLabels.BadgeFor(problem.Priority)">@ItilLabels.For(problem.Priority)</span></td>
+                                                <td class="text-secondary">@Display.DateTime(problem.OpenedAt)</td>
+                                                <td>
+                                                    <button type="button" class="btn btn-icon btn-sm text-danger" title="Détacher"
+                                                            @onclick="() => DetachProblemAsync(problem.Id)">
+                                                        <i class="ti ti-unlink"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        break;
+
                     case "suivis":
                         <p class="text-secondary">
-                            Le fil de l'analyse. Un suivi interne reste entre intervenants.
+                            Le fil du changement. Un suivi interne reste entre intervenants.
                         </p>
 
                         <div class="mb-3">
@@ -413,7 +614,7 @@ else
 
                     case "taches":
                         <p class="text-secondary">
-                            Travaux d'analyse ou de correction, planifiables et attribuables.
+                            Travaux de préparation, d'application ou de vérification, planifiables et attribuables.
                         </p>
 
                         <div class="card mb-3">
@@ -504,82 +705,96 @@ else
                         break;
 
                     case "solution":
-                        string solvedOn = _problem.SolvedAt is { } solvedDate
+                        string appliedOn = _change.SolvedAt is { } solvedDate
                             ? $" le {Display.DateTime(solvedDate)}"
                             : string.Empty;
 
-                        @* Sous observation n'est pas un état d'arrivée : la solution est posée, le
-                           problème reste ouvert. Le dire ici évite de croire qu'il est réglé. *@
-                        @if (_problem.Status is ProblemStatus.Observed)
+                        @if (_change.Status is ChangeStatus.Observed)
                         {
                             <div class="alert alert-info">
-                                Solution posée@(solvedOn), problème sous observation : il reste
-                                ouvert tant que l'arrêt des incidents n'est pas confirmé.
+                                Changement appliqué@(appliedOn), en revue : il reste ouvert tant que son
+                                effet n'est pas confirmé.
                             </div>
                         }
-                        else if (_problem.Status is ProblemStatus.Solved or ProblemStatus.Closed)
+                        else if (_change.Status is ChangeStatus.Canceled)
+                        {
+                            <div class="alert alert-secondary">Changement annulé sans avoir été appliqué.</div>
+                        }
+                        else if (!_change.IsOpen)
                         {
                             <div class="alert alert-success">
-                                Problème @ProblemLabels.For(_problem.Status).ToLowerInvariant()@(solvedOn).
+                                Changement @ChangeLabels.For(_change.Status).ToLowerInvariant()@(appliedOn).
                             </div>
+                        }
+                        else
+                        {
+                            @* Mises en garde, pas des blocages : GLPI n'empêche pas d'appliquer un
+                               changement non approuvé, mais c'est le moment de le rappeler. *@
+                            @if (_change.GlobalValidation != ChangeValidationStatus.Accepted)
+                            {
+                                <div class="alert alert-warning">
+                                    Ce changement n'est pas approuvé
+                                    (approbation : @ChangeLabels.For(_change.GlobalValidation).ToLowerInvariant()).
+                                </div>
+                            }
+                            @if (string.IsNullOrWhiteSpace(_change.BackoutPlanContent))
+                            {
+                                <div class="alert alert-warning">
+                                    Aucun plan de retour arrière : rien ne dit comment revenir en arrière si
+                                    l'application tourne mal (onglet Plans).
+                                </div>
+                            }
                         }
 
                         <div class="glpi-fiche-field">
                             <label>Type de solution</label>
-                            <input class="form-control" placeholder="Correctif éditeur, changement de configuration…"
-                                   @bind="_problem.SolutionType" />
+                            <input class="form-control" placeholder="Mise à jour, changement de configuration…"
+                                   @bind="_change.SolutionType" />
                         </div>
                         <div class="glpi-fiche-field">
-                            <label>Solution</label>
-                            <textarea class="form-control" rows="6" @bind="_problem.Solution" @bind:event="oninput"></textarea>
+                            <label>Compte rendu d'application</label>
+                            <textarea class="form-control" rows="6" @bind="_change.Solution" @bind:event="oninput"></textarea>
                         </div>
 
-                        @if (_problem.IsOpen)
+                        @if (_change.IsOpen)
                         {
-                            <button type="button" class="btn btn-success" disabled="@string.IsNullOrWhiteSpace(_problem.Solution)"
-                                    @onclick="SolveAsync">
+                            <button type="button" class="btn btn-success" disabled="@string.IsNullOrWhiteSpace(_change.Solution)"
+                                    @onclick="ApplyAsync">
                                 <i class="ti ti-check me-1"></i>
-                                @(_problem.Status is ProblemStatus.Observed ? "Confirmer la résolution" : "Marquer comme résolu")
+                                @(_change.Status is ChangeStatus.Observed ? "Confirmer l'application" : "Marquer comme appliqué")
                             </button>
 
-                            @if (_problem.Status is not ProblemStatus.Observed)
+                            @if (_change.Status is not ChangeStatus.Observed)
                             {
-                                <button type="button" class="btn ms-2" disabled="@string.IsNullOrWhiteSpace(_problem.Solution)"
-                                        @onclick="ObserveAsync">
-                                    <i class="ti ti-eye me-1"></i>Mettre sous observation
+                                <button type="button" class="btn ms-2" disabled="@string.IsNullOrWhiteSpace(_change.Solution)"
+                                        @onclick="ReviewAsync">
+                                    <i class="ti ti-eye me-1"></i>Mettre en revue
                                 </button>
-                                <p class="hint">
-                                    « Sous observation » enregistre la solution sans clore l'analyse :
-                                    à choisir tant qu'on attend de voir si les incidents cessent.
-                                </p>
                             }
+
+                            <button type="button" class="btn ms-2 text-danger" @onclick="CancelAsync">
+                                <i class="ti ti-ban me-1"></i>Annuler le changement
+                            </button>
+                            <p class="hint">
+                                « En revue » enregistre l'application sans clore le changement : à
+                                choisir tant qu'on vérifie qu'il a produit l'effet voulu.
+                            </p>
                         }
-                        else if (_problem.Status is ProblemStatus.Solved)
+                        else if (_change.Status is ChangeStatus.Solved)
                         {
                             <button type="button" class="btn" @onclick="CloseAsync">
-                                <i class="ti ti-lock me-1"></i>Clore le problème
+                                <i class="ti ti-lock me-1"></i>Clore le changement
                             </button>
-                            @if (_openTicketCount > 0)
-                            {
-                                <p class="hint text-warning">
-                                    @_openTicketCount incident(s) rattaché(s) sont encore ouverts.
-                                </p>
-                            }
                         }
-                        break;
-
-                    case "changements":
-                        <LinkedChangesTab Changes="_changes"
-                                          Intro="Changements qui traitent la cause de ce problème. Le rattachement se fait depuis la fiche du changement." />
                         break;
 
                     case "documents":
-                        <ItemDocumentsTab ItemType="@ItemTypes.Problem" ItemId="ProblemId" AuthorName="@_currentUserName"
+                        <ItemDocumentsTab ItemType="@ItemTypes.Change" ItemId="ChangeId" AuthorName="@_currentUserName"
                                           CountChanged="count => _documentCount = count" />
                         break;
 
                     case "notes":
-                        <ItemNotesTab ItemType="@ItemTypes.Problem" ItemId="ProblemId" AuthorName="@_currentUserName"
+                        <ItemNotesTab ItemType="@ItemTypes.Change" ItemId="ChangeId" AuthorName="@_currentUserName"
                                       CountChanged="count => _noteCount = count" />
                         break;
 

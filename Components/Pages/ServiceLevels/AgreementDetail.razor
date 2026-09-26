@@ -1,0 +1,314 @@
+@page "/config/service-levels/agreements/{AgreementId:int}"
+@rendermode InteractiveServer
+
+<PageTitle>@(_agreement is null ? "Engagement" : _agreement.Name) — GlpiNg</PageTitle>
+
+@if (_agreement is null)
+{
+    <div class="card"><div class="card-body text-center text-secondary py-5">Engagement introuvable.</div></div>
+}
+else
+{
+    <div class="glpi-fiche">
+        <div class="glpi-fiche-header d-flex align-items-center justify-content-between">
+            <h2 class="mb-0">
+                <i class="ti ti-clock-check me-2"></i>@_agreement.Name
+                <span class="badge @(_agreement.Kind == ServiceLevelKind.Sla ? "bg-blue-lt" : "bg-purple-lt") ms-2">
+                    @ServiceLevelLabels.ShortFor(_agreement.Kind)
+                </span>
+                <span class="badge bg-secondary-lt ms-1">@ServiceLevelLabels.For(_agreement.Target)</span>
+            </h2>
+            <div class="btn-list">
+                <a class="btn" href="@($"/config/service-levels/{_agreement.ServiceLevelId}")">
+                    <i class="ti ti-arrow-left me-1"></i>Retour au niveau de service
+                </a>
+                <button type="button" class="btn btn-warning" disabled="@_isSaving" @onclick="SaveAsync">
+                    <i class="ti ti-device-floppy me-1"></i>Enregistrer
+                </button>
+            </div>
+        </div>
+
+        <div class="glpi-fiche-layout">
+            <aside class="glpi-fiche-sidebar">
+                @foreach ((string key, string label, string icon, int? count) in Tabs)
+                {
+                    <button type="button" class="glpi-fiche-tab-item @(_activeTab == key ? "active" : "")"
+                            @onclick="() => _activeTab = key">
+                        <i class="ti @icon"></i>
+                        <span>@label</span>
+                        @if (count is { } value)
+                        {
+                            <span class="glpi-fiche-tab-count">@value</span>
+                        }
+                    </button>
+                }
+            </aside>
+
+            <div class="glpi-fiche-panel">
+                @switch (_activeTab)
+                {
+                    case "fiche":
+                        @if (_error is not null)
+                        {
+                            <div class="alert alert-danger">@_error</div>
+                        }
+
+                        <div class="glpi-fiche-field">
+                            <label>Nom<span class="text-danger ms-1">*</span></label>
+                            <input class="form-control" @bind="_agreement.Name" />
+                        </div>
+                        <div class="glpi-fiche-field">
+                            <label>Niveau de service</label>
+                            <input class="form-control" disabled value="@_levelName" />
+                        </div>
+                        <div class="glpi-fiche-field">
+                            <label>Calendrier</label>
+                            <input class="form-control" disabled value="@(_calendarName ?? "Aucun (temps réel, 24/7)")" />
+                        </div>
+                        <p class="hint">
+                            Le calendrier se règle sur le niveau de service : tous ses engagements
+                            se comptent sur les mêmes heures.
+                        </p>
+
+                        <hr />
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="glpi-fiche-field">
+                                    <label>Durée</label>
+                                    <input class="form-control" type="number" min="1" @bind="_agreement.DurationValue" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="glpi-fiche-field">
+                                    <label>Unité</label>
+                                    <select class="form-select" value="@((int)_agreement.DurationUnit)"
+                                            @onchange="@(e => _agreement.DurationUnit = (ServiceLevelUnit)int.Parse(e.Value?.ToString() ?? "2"))">
+                                        @foreach (ServiceLevelUnit unit in Enum.GetValues<ServiceLevelUnit>())
+                                        {
+                                            <option value="@((int)unit)">@ServiceLevelLabels.For(unit)</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <label class="form-check">
+                            <input class="form-check-input" type="checkbox" checked="@_agreement.EndOfWorkingDay"
+                                   @onchange="@((ChangeEventArgs e) => _agreement.EndOfWorkingDay = (bool)(e.Value ?? false))" />
+                            <span class="form-check-label">Reporter l'échéance à la fin de la journée ouvrée</span>
+                        </label>
+                        <p class="hint">
+                            Pour un engagement « à la journée » : ce qui compte est que ce soit fait
+                            avant la fermeture, pas à 14 h 37 précises.
+                        </p>
+
+                        <div class="glpi-fiche-field">
+                            <label>Commentaire</label>
+                            <textarea class="form-control" rows="3" @bind="_agreement.Comment"></textarea>
+                        </div>
+
+                        <div class="glpi-fiche-field">
+                            <label>Tickets engagés</label>
+                            <input class="form-control" disabled value="@_ticketCount" />
+                        </div>
+                        break;
+
+                    case "escalades":
+                        <p class="text-secondary">
+                            Ce qui se produit quand l'échéance approche ou passe sans que le ticket
+                            soit traité. Un niveau ne s'applique qu'une fois par ticket, et un
+                            engagement déjà tenu n'escalade pas.
+                        </p>
+
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-5">
+                                        <label class="form-label">Nom du niveau</label>
+                                        <input class="form-control" @bind="_newEscalationName" @bind:event="oninput" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Décalage (minutes)</label>
+                                        <input class="form-control" type="number" @bind="_newEscalationOffset" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button type="button" class="btn btn-primary w-100"
+                                                disabled="@string.IsNullOrWhiteSpace(_newEscalationName)"
+                                                @onclick="AddEscalationAsync">
+                                            <i class="ti ti-plus me-1"></i>Ajouter le niveau
+                                        </button>
+                                    </div>
+                                </div>
+                                <p class="hint mt-2 mb-0">
+                                    Négatif pour agir <strong>avant</strong> l'échéance (-60 = une
+                                    heure avant), positif pour agir après, zéro à l'échéance même.
+                                    Le décalage se compte en minutes ouvrées.
+                                </p>
+                            </div>
+                        </div>
+
+                        @if (_agreement.Escalations.Count == 0)
+                        {
+                            <div class="glpi-config-placeholder">
+                                <i class="ti ti-stairs-up"></i>
+                                <p class="mb-0">Aucun niveau d'escalade.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (ServiceLevelEscalation escalation in OrderedEscalations)
+                            {
+                                <div class="card mb-3">
+                                    <div class="card-header d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <span class="fw-semibold">@escalation.Name</span>
+                                            <span class="badge bg-secondary-lt ms-2">@escalation.OffsetLabel</span>
+                                            @if (!escalation.IsActive)
+                                            {
+                                                <span class="badge bg-warning-lt ms-1">Inactif</span>
+                                            }
+                                            @if (escalation.Actions.Count == 0)
+                                            {
+                                                @* Un niveau sans action se déclenche et ne fait
+                                                   rien : autant le dire ici. *@
+                                                <span class="badge bg-danger-lt ms-1">Aucune action</span>
+                                            }
+                                        </div>
+                                        <div class="btn-list">
+                                            <button type="button" class="btn btn-sm"
+                                                    @onclick="() => ToggleEscalationAsync(escalation.Id, !escalation.IsActive)">
+                                                <i class="ti @(escalation.IsActive ? "ti-player-pause" : "ti-player-play") me-1"></i>
+                                                @(escalation.IsActive ? "Désactiver" : "Activer")
+                                            </button>
+                                            <button type="button" class="btn btn-icon btn-sm text-danger" title="Supprimer"
+                                                    @onclick="() => DeleteEscalationAsync(escalation.Id)">
+                                                <i class="ti ti-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        @if (escalation.Actions.Count > 0)
+                                        {
+                                            <div class="table-responsive mb-3">
+                                                <table class="table table-vcenter mb-0">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Action</th>
+                                                            <th>Valeur</th>
+                                                            <th style="width: 3rem;"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (ServiceLevelEscalationAction action in escalation.Actions)
+                                                        {
+                                                            <tr>
+                                                                <td>@ServiceLevelLabels.For(action.ActionType)</td>
+                                                                <td class="text-secondary">@DescribeValue(action)</td>
+                                                                <td>
+                                                                    <button type="button" class="btn btn-icon btn-sm text-danger"
+                                                                            title="Supprimer"
+                                                                            @onclick="() => DeleteActionAsync(action.Id)">
+                                                                        <i class="ti ti-trash"></i>
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        }
+
+                                        <div class="row g-2 align-items-end">
+                                            <div class="col-md-4">
+                                                <label class="form-label">Ajouter une action</label>
+                                                <select class="form-select" value="@((int)ActionTypeFor(escalation.Id))"
+                                                        @onchange="@(e => SetActionType(escalation.Id, e.Value?.ToString()))">
+                                                    @foreach (EscalationActionType type in Enum.GetValues<EscalationActionType>())
+                                                    {
+                                                        <option value="@((int)type)">@ServiceLevelLabels.For(type)</option>
+                                                    }
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Valeur</label>
+                                                @switch (ActionTypeFor(escalation.Id))
+                                                {
+                                                    case EscalationActionType.SetPriority:
+                                                        <select class="form-select" value="@ActionValueFor(escalation.Id)"
+                                                                @onchange="@(e => SetActionValue(escalation.Id, e.Value?.ToString()))">
+                                                            <option value="">—</option>
+                                                            @foreach (ItilLevel level in Enum.GetValues<ItilLevel>())
+                                                            {
+                                                                <option value="@((int)level)">@ItilLabels.For(level)</option>
+                                                            }
+                                                        </select>
+                                                        break;
+
+                                                    case EscalationActionType.SetStatus:
+                                                        <select class="form-select" value="@ActionValueFor(escalation.Id)"
+                                                                @onchange="@(e => SetActionValue(escalation.Id, e.Value?.ToString()))">
+                                                            <option value="">—</option>
+                                                            @foreach (TicketStatus status in Enum.GetValues<TicketStatus>())
+                                                            {
+                                                                <option value="@((int)status)">@TicketLabels.For(status)</option>
+                                                            }
+                                                        </select>
+                                                        break;
+
+                                                    case EscalationActionType.AssignUser:
+                                                        <select class="form-select" value="@ActionValueFor(escalation.Id)"
+                                                                @onchange="@(e => SetActionValue(escalation.Id, e.Value?.ToString()))">
+                                                            <option value="">—</option>
+                                                            @foreach (var user in _users)
+                                                            {
+                                                                <option value="@user.Id">@user.Name</option>
+                                                            }
+                                                        </select>
+                                                        break;
+
+                                                    case EscalationActionType.AssignGroup:
+                                                        <select class="form-select" value="@ActionValueFor(escalation.Id)"
+                                                                @onchange="@(e => SetActionValue(escalation.Id, e.Value?.ToString()))">
+                                                            <option value="">—</option>
+                                                            @foreach (var group in _groups)
+                                                            {
+                                                                <option value="@group.Id">@group.Name</option>
+                                                            }
+                                                        </select>
+                                                        break;
+
+                                                    case EscalationActionType.AddFollowup:
+                                                        <input class="form-control" placeholder="Texte du suivi interne"
+                                                               value="@ActionValueFor(escalation.Id)"
+                                                               @oninput="@(e => SetActionValue(escalation.Id, e.Value?.ToString()))" />
+                                                        break;
+
+                                                    default:
+                                                        <input class="form-control" disabled
+                                                               value="Publie l'événement « Escalade d'un ticket »" />
+                                                        break;
+                                                }
+                                            </div>
+                                            <div class="col-md-2">
+                                                <button type="button" class="btn btn-primary w-100"
+                                                        @onclick="() => AddActionAsync(escalation.Id)">
+                                                    <i class="ti ti-plus me-1"></i>Ajouter
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+
+                        @if (_escalationError is not null)
+                        {
+                            <div class="alert alert-danger">@_escalationError</div>
+                        }
+                        break;
+                }
+            </div>
+        </div>
+    </div>
+}

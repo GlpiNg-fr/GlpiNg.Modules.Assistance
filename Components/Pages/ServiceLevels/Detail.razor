@@ -1,0 +1,217 @@
+@page "/config/service-levels/{ServiceLevelId:int}"
+@rendermode InteractiveServer
+
+<PageTitle>@(_level is null ? "Niveau de service" : _level.Name) — GlpiNg</PageTitle>
+
+@if (_level is null)
+{
+    <div class="card"><div class="card-body text-center text-secondary py-5">Niveau de service introuvable.</div></div>
+}
+else
+{
+    <div class="glpi-fiche">
+        <div class="glpi-fiche-header d-flex align-items-center justify-content-between">
+            <h2 class="mb-0">
+                <i class="ti ti-clipboard-check me-2"></i>@_level.Name
+                @if (_level.CalendarId is null)
+                {
+                    <span class="badge bg-secondary-lt ms-2">24/7</span>
+                }
+            </h2>
+            <div class="btn-list">
+                <a class="btn" href="/config/service-levels"><i class="ti ti-arrow-left me-1"></i>Retour à la liste</a>
+                <button type="button" class="btn btn-warning" disabled="@_isSaving" @onclick="SaveAsync">
+                    <i class="ti ti-device-floppy me-1"></i>Enregistrer
+                </button>
+            </div>
+        </div>
+
+        <div class="glpi-fiche-layout">
+            <aside class="glpi-fiche-sidebar">
+                @foreach ((string key, string label, string icon, int? count) in Tabs)
+                {
+                    <button type="button" class="glpi-fiche-tab-item @(_activeTab == key ? "active" : "")"
+                            @onclick="() => _activeTab = key">
+                        <i class="ti @icon"></i>
+                        <span>@label</span>
+                        @if (count is { } value)
+                        {
+                            <span class="glpi-fiche-tab-count">@value</span>
+                        }
+                    </button>
+                }
+            </aside>
+
+            <div class="glpi-fiche-panel">
+                @switch (_activeTab)
+                {
+                    case "fiche":
+                        @if (_error is not null)
+                        {
+                            <div class="alert alert-danger">@_error</div>
+                        }
+
+                        <div class="glpi-fiche-field">
+                            <label>Nom<span class="text-danger ms-1">*</span></label>
+                            <input class="form-control" @bind="_level.Name" />
+                        </div>
+                        <div class="glpi-fiche-field">
+                            <label>Calendrier</label>
+                            <select class="form-select" @bind="_calendarId">
+                                <option value="0">Aucun (temps réel, 24/7)</option>
+                                @foreach (Calendar calendar in _calendars)
+                                {
+                                    <option value="@calendar.Id">@calendar.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <p class="hint">
+                            Sans calendrier, « 4 heures » veut dire quatre heures réelles, week-end
+                            compris. Le changer ne recalcule pas les échéances déjà posées sur les
+                            tickets : une échéance qui bouge n'engage plus personne.
+                        </p>
+                        <div class="glpi-fiche-field">
+                            <label>Commentaire</label>
+                            <textarea class="form-control" rows="4" @bind="_level.Comment"></textarea>
+                        </div>
+                        break;
+
+                    case "engagements":
+                        <p class="text-secondary">
+                            Un engagement dit combien de temps on se donne, et pour quoi. Le SLA se
+                            compte depuis l'ouverture du ticket, l'OLA depuis son attribution.
+                        </p>
+
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-3">
+                                        <label class="form-label">Nom</label>
+                                        <input class="form-control" @bind="_newAgreement.Name" @bind:event="oninput" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Envers</label>
+                                        <select class="form-select" value="@((int)_newAgreement.Kind)"
+                                                @onchange="@(e => _newAgreement.Kind = (ServiceLevelKind)int.Parse(e.Value?.ToString() ?? "1"))">
+                                            @foreach (ServiceLevelKind kind in Enum.GetValues<ServiceLevelKind>())
+                                            {
+                                                <option value="@((int)kind)">@ServiceLevelLabels.ShortFor(kind)</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Porte sur</label>
+                                        <select class="form-select" value="@((int)_newAgreement.Target)"
+                                                @onchange="@(e => _newAgreement.Target = (ServiceLevelTarget)int.Parse(e.Value?.ToString() ?? "0"))">
+                                            @foreach (ServiceLevelTarget target in Enum.GetValues<ServiceLevelTarget>())
+                                            {
+                                                <option value="@((int)target)">@ServiceLevelLabels.For(target)</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Durée</label>
+                                        <input class="form-control" type="number" min="1" @bind="_newAgreement.DurationValue" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Unité</label>
+                                        <select class="form-select" value="@((int)_newAgreement.DurationUnit)"
+                                                @onchange="@(e => _newAgreement.DurationUnit = (ServiceLevelUnit)int.Parse(e.Value?.ToString() ?? "2"))">
+                                            @foreach (ServiceLevelUnit unit in Enum.GetValues<ServiceLevelUnit>())
+                                            {
+                                                <option value="@((int)unit)">@ServiceLevelLabels.For(unit)</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <button type="button" class="btn btn-primary w-100"
+                                                disabled="@string.IsNullOrWhiteSpace(_newAgreement.Name)"
+                                                @onclick="AddAgreementAsync">
+                                            <i class="ti ti-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                @if (_agreementError is not null)
+                                {
+                                    <div class="alert alert-danger mt-2 mb-0">@_agreementError</div>
+                                }
+                            </div>
+                        </div>
+
+                        @if (_level.Agreements.Count == 0)
+                        {
+                            <div class="glpi-config-placeholder">
+                                <i class="ti ti-clipboard-off"></i>
+                                <p class="mb-0">Aucun engagement : ce niveau de service ne fait rien.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-vcenter">
+                                    <thead>
+                                        <tr>
+                                            <th>Nom</th>
+                                            <th>Envers</th>
+                                            <th>Porte sur</th>
+                                            <th>Durée</th>
+                                            <th>Escalades</th>
+                                            <th>Tickets</th>
+                                            <th style="width: 6rem;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (ServiceLevelAgreement agreement in OrderedAgreements)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <a href="@($"/config/service-levels/agreements/{agreement.Id}")"
+                                                       class="text-reset fw-semibold">@agreement.Name</a>
+                                                </td>
+                                                <td>
+                                                    <span class="badge @(agreement.Kind == ServiceLevelKind.Sla ? "bg-blue-lt" : "bg-purple-lt")">
+                                                        @ServiceLevelLabels.ShortFor(agreement.Kind)
+                                                    </span>
+                                                </td>
+                                                <td class="text-secondary">@ServiceLevelLabels.For(agreement.Target)</td>
+                                                <td class="text-secondary">
+                                                    @agreement.DurationValue @ServiceLevelLabels.For(agreement.DurationUnit)
+                                                    @if (agreement.EndOfWorkingDay)
+                                                    {
+                                                        <span class="badge bg-secondary-lt ms-1">fin de journée</span>
+                                                    }
+                                                </td>
+                                                <td class="text-secondary">@agreement.Escalations.Count</td>
+                                                <td class="text-secondary">@_ticketCounts.GetValueOrDefault(agreement.Id)</td>
+                                                <td class="text-nowrap">
+                                                    <a class="btn btn-icon btn-sm" title="Ouvrir"
+                                                       href="@($"/config/service-levels/agreements/{agreement.Id}")">
+                                                        <i class="ti ti-pencil"></i>
+                                                    </a>
+                                                    <div class="dropdown d-inline-block">
+                                                        <button type="button" class="btn btn-icon btn-sm text-danger"
+                                                                data-bs-toggle="dropdown" aria-expanded="false" title="Supprimer">
+                                                            <i class="ti ti-trash"></i>
+                                                        </button>
+                                                        <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 300px;">
+                                                            <p class="mb-2">Supprimer cet engagement et ses niveaux d'escalade ?</p>
+                                                            <div class="d-flex justify-content-end gap-2">
+                                                                <button type="button" class="btn btn-sm">Annuler</button>
+                                                                <button type="button" class="btn btn-sm btn-danger"
+                                                                        @onclick="() => DeleteAgreementAsync(agreement.Id)">Supprimer</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        break;
+                }
+            </div>
+        </div>
+    </div>
+}

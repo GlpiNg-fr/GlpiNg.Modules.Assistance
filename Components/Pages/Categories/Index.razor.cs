@@ -147,7 +147,7 @@ public partial class Index : ComponentBase
         _edited = NewBlank();
         _editedParentId = 0;
 
-        await JS.InvokeVoidAsync("glpiNg.showModal", "categoryModal");
+        await JS.InvokeVoidAsync("glping.showModal", "categoryModal");
     }
 
     private async Task StartEdit(TicketCategory category)
@@ -167,7 +167,7 @@ public partial class Index : ComponentBase
 
         _editedParentId = category.ParentId ?? 0;
 
-        await JS.InvokeVoidAsync("glpiNg.showModal", "categoryModal");
+        await JS.InvokeVoidAsync("glping.showModal", "categoryModal");
     }
 
     private async Task SaveAsync()
@@ -208,7 +208,7 @@ public partial class Index : ComponentBase
 
         await db.SaveChangesAsync();
 
-        await JS.InvokeVoidAsync("glpiNg.hideModal", "categoryModal");
+        await JS.InvokeVoidAsync("glping.hideModal", "categoryModal");
         await LoadAsync();
     }
 
@@ -219,7 +219,7 @@ public partial class Index : ComponentBase
             return;
         }
 
-        await JS.InvokeVoidAsync("glpiNg.hideModal", "categoryModal");
+        await JS.InvokeVoidAsync("glping.hideModal", "categoryModal");
         await DeleteAsync([_edited.Id]);
     }
 

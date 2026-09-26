@@ -268,7 +268,7 @@ public partial class Index : ComponentBase
         _newChange = NewBlank();
         _newCategoryId = 0;
 
-        await JS.InvokeVoidAsync("glpiNg.hideModal", "newChangeModal");
+        await JS.InvokeVoidAsync("glping.hideModal", "newChangeModal");
 
         // On ouvre la fiche : c'est là que le changement se prépare (analyse, plans, approbations).
         Navigation.NavigateTo($"/assistance/changes/{createdId}");

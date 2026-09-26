@@ -4,7 +4,7 @@
    La barre ne double que la colonne « Ouverts » — une seule mesure par barre, à la même échelle
    pour toutes les lignes, pour que les longueurs se comparent d'un coup d'œil. *@
 
-<div class="card glpi-stats-breakdown">
+<div class="card glping-stats-breakdown">
     <div class="card-header">
         <h3 class="card-title">@Title</h3>
     </div>
@@ -31,15 +31,15 @@
                         <tr>
                             <td class="text-truncate" style="max-width: 14rem;" title="@row.Label">@row.Label</td>
                             <td>
-                                <div class="glpi-stats-barcell">
-                                    <span class="glpi-stats-bartrack">
-                                        <span class="glpi-stats-bar" style="width: @BarWidth(row.Opened, max);"></span>
+                                <div class="glping-stats-barcell">
+                                    <span class="glping-stats-bartrack">
+                                        <span class="glping-stats-bar" style="width: @BarWidth(row.Opened, max);"></span>
                                     </span>
-                                    <span class="glpi-stats-num">@row.Opened</span>
+                                    <span class="glping-stats-num">@row.Opened</span>
                                 </div>
                             </td>
-                            <td class="text-end glpi-stats-num">@row.Solved</td>
-                            <td class="text-end glpi-stats-num text-secondary">@ItilStatistics.FormatDuration(row.AverageResolution)</td>
+                            <td class="text-end glping-stats-num">@row.Solved</td>
+                            <td class="text-end glping-stats-num text-secondary">@ItilStatistics.FormatDuration(row.AverageResolution)</td>
                         </tr>
                     }
                 </tbody>

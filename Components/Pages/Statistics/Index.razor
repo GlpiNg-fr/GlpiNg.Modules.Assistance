@@ -4,7 +4,7 @@
 
 <PageTitle>Statistiques — GlpiNg</PageTitle>
 
-<div class="glpi-stats">
+<div class="glping-stats">
     @* Tous les filtres sur une ligne, au-dessus de ce qu'ils filtrent. *@
     <div class="card mb-3">
         <div class="card-body d-flex flex-wrap align-items-center gap-2">
@@ -36,50 +36,50 @@
 
     @if (_summary is { } summary)
     {
-        <div class="glpi-stats-tiles mb-3">
-            <div class="glpi-stats-tile">
-                <div class="glpi-stats-tile-label">Ouverts sur la période</div>
-                <div class="glpi-stats-tile-value">@summary.Opened.ToString("N0", French)</div>
+        <div class="glping-stats-tiles mb-3">
+            <div class="glping-stats-tile">
+                <div class="glping-stats-tile-label">Ouverts sur la période</div>
+                <div class="glping-stats-tile-value">@summary.Opened.ToString("N0", French)</div>
             </div>
-            <div class="glpi-stats-tile">
-                <div class="glpi-stats-tile-label">Résolus sur la période</div>
-                <div class="glpi-stats-tile-value">@summary.Solved.ToString("N0", French)</div>
+            <div class="glping-stats-tile">
+                <div class="glping-stats-tile-label">Résolus sur la période</div>
+                <div class="glping-stats-tile-value">@summary.Solved.ToString("N0", French)</div>
             </div>
-            <div class="glpi-stats-tile">
-                <div class="glpi-stats-tile-label">Clos sur la période</div>
-                <div class="glpi-stats-tile-value">@summary.Closed.ToString("N0", French)</div>
+            <div class="glping-stats-tile">
+                <div class="glping-stats-tile-label">Clos sur la période</div>
+                <div class="glping-stats-tile-value">@summary.Closed.ToString("N0", French)</div>
             </div>
-            <div class="glpi-stats-tile">
-                <div class="glpi-stats-tile-label">En cours aujourd'hui</div>
-                <div class="glpi-stats-tile-value">@summary.Backlog.ToString("N0", French)</div>
+            <div class="glping-stats-tile">
+                <div class="glping-stats-tile-label">En cours aujourd'hui</div>
+                <div class="glping-stats-tile-value">@summary.Backlog.ToString("N0", French)</div>
                 @if (summary.Overdue > 0)
                 {
                     @* Statut : icône et libellé, jamais la couleur seule. *@
-                    <div class="glpi-stats-tile-note text-danger">
+                    <div class="glping-stats-tile-note text-danger">
                         <i class="ti ti-alert-triangle me-1"></i>@summary.Overdue en retard
                     </div>
                 }
                 else
                 {
-                    <div class="glpi-stats-tile-note text-secondary">
+                    <div class="glping-stats-tile-note text-secondary">
                         <i class="ti ti-circle-check me-1"></i>aucun en retard
                     </div>
                 }
             </div>
-            <div class="glpi-stats-tile">
-                <div class="glpi-stats-tile-label">Délai moyen de résolution</div>
-                <div class="glpi-stats-tile-value">@ItilStatistics.FormatDuration(summary.AverageResolution)</div>
+            <div class="glping-stats-tile">
+                <div class="glping-stats-tile-label">Délai moyen de résolution</div>
+                <div class="glping-stats-tile-value">@ItilStatistics.FormatDuration(summary.AverageResolution)</div>
                 @if (summary.MedianResolution is not null)
                 {
-                    <div class="glpi-stats-tile-note text-secondary">médiane @ItilStatistics.FormatDuration(summary.MedianResolution)</div>
+                    <div class="glping-stats-tile-note text-secondary">médiane @ItilStatistics.FormatDuration(summary.MedianResolution)</div>
                 }
             </div>
             @if (IsTickets)
             {
-                <div class="glpi-stats-tile">
-                    <div class="glpi-stats-tile-label">Résolus dans les délais (SLA)</div>
-                    <div class="glpi-stats-tile-value">@Percent(summary.SlaMet, summary.SlaMeasured)</div>
-                    <div class="glpi-stats-tile-note text-secondary">
+                <div class="glping-stats-tile">
+                    <div class="glping-stats-tile-label">Résolus dans les délais (SLA)</div>
+                    <div class="glping-stats-tile-value">@Percent(summary.SlaMet, summary.SlaMeasured)</div>
+                    <div class="glping-stats-tile-note text-secondary">
                         @(summary.SlaMeasured == 0
                             ? "aucun ticket résolu sous engagement"
                             : $"{summary.SlaMet} sur {summary.SlaMeasured} sous engagement")
@@ -102,10 +102,10 @@
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-3">
-                    <div class="glpi-stats-legend">
-                        <span><i class="glpi-stats-key glpi-stats-s1"></i>Ouverts</span>
-                        <span><i class="glpi-stats-key glpi-stats-s2"></i>Résolus</span>
-                        <span><i class="glpi-stats-key glpi-stats-s3"></i>Clos</span>
+                    <div class="glping-stats-legend">
+                        <span><i class="glping-stats-key glping-stats-s1"></i>Ouverts</span>
+                        <span><i class="glping-stats-key glping-stats-s2"></i>Résolus</span>
+                        <span><i class="glping-stats-key glping-stats-s3"></i>Clos</span>
                     </div>
                     <button type="button" class="btn btn-sm" @onclick="() => _showTable = !_showTable">
                         <i class="ti @(_showTable ? "ti-chart-line" : "ti-table") me-1"></i>@(_showTable ? "Graphique" : "Tableau")
@@ -130,9 +130,9 @@
                                 {
                                     <tr>
                                         <td class="text-capitalize">@bucket.LongLabel</td>
-                                        <td class="text-end glpi-stats-num">@bucket.Opened</td>
-                                        <td class="text-end glpi-stats-num">@bucket.Solved</td>
-                                        <td class="text-end glpi-stats-num">@bucket.Closed</td>
+                                        <td class="text-end glping-stats-num">@bucket.Opened</td>
+                                        <td class="text-end glping-stats-num">@bucket.Solved</td>
+                                        <td class="text-end glping-stats-num">@bucket.Closed</td>
                                     </tr>
                                 }
                             </tbody>
@@ -141,7 +141,7 @@
                 }
                 else
                 {
-                    <div class="glpi-stats-chart" @ref="_chartRef" @onmouseleave="() => _hovered = null">
+                    <div class="glping-stats-chart" @ref="_chartRef" @onmouseleave="() => _hovered = null">
                         <svg viewBox="0 0 @ChartWidth @ChartHeight" width="@ChartWidth" height="@ChartHeight" role="img"
                              aria-label="@($"Évolution des {ItemsLabel} ouverts, résolus et clos")">
                             @* Chaque <text> SVG est posé dans un <g> : en tête d'un bloc de code, Razor
@@ -150,48 +150,48 @@
                             {
                                 double y = Y(tick);
                                 <g>
-                                    <line class="glpi-stats-grid" x1="@PlotLeft" x2="@PlotRight" y1="@F(y)" y2="@F(y)" />
-                                    <text class="glpi-stats-axis" x="@(PlotLeft - 8)" y="@F(y + 4)" text-anchor="end">@tick.ToString("N0", French)</text>
+                                    <line class="glping-stats-grid" x1="@PlotLeft" x2="@PlotRight" y1="@F(y)" y2="@F(y)" />
+                                    <text class="glping-stats-axis" x="@(PlotLeft - 8)" y="@F(y + 4)" text-anchor="end">@tick.ToString("N0", French)</text>
                                 </g>
                             }
 
                             @for (int index = 0; index < _buckets.Count; index += LabelStep)
                             {
                                 <g>
-                                    <text class="glpi-stats-axis" x="@F(X(index))" y="@(PlotBottom + 20)" text-anchor="middle">@_buckets[index].Label</text>
+                                    <text class="glping-stats-axis" x="@F(X(index))" y="@(PlotBottom + 20)" text-anchor="middle">@_buckets[index].Label</text>
                                 </g>
                             }
 
                             @if (_hovered is { } hoveredIndex)
                             {
-                                <line class="glpi-stats-crosshair" x1="@F(X(hoveredIndex))" x2="@F(X(hoveredIndex))" y1="@PlotTop" y2="@PlotBottom" />
+                                <line class="glping-stats-crosshair" x1="@F(X(hoveredIndex))" x2="@F(X(hoveredIndex))" y1="@PlotTop" y2="@PlotBottom" />
                             }
 
-                            <polyline class="glpi-stats-line glpi-stats-s1" points="@Points(bucket => bucket.Opened)" />
-                            <polyline class="glpi-stats-line glpi-stats-s2" points="@Points(bucket => bucket.Solved)" />
-                            <polyline class="glpi-stats-line glpi-stats-s3" points="@Points(bucket => bucket.Closed)" />
+                            <polyline class="glping-stats-line glping-stats-s1" points="@Points(bucket => bucket.Opened)" />
+                            <polyline class="glping-stats-line glping-stats-s2" points="@Points(bucket => bucket.Solved)" />
+                            <polyline class="glping-stats-line glping-stats-s3" points="@Points(bucket => bucket.Closed)" />
 
                             @* Marqueurs au point survolé et en fin de courbe seulement : un point sur
                                chaque mesure chargerait le tracé sans rien apprendre de plus. *@
                             @foreach (int index in new[] { _buckets.Count - 1, _hovered ?? -1 }.Where(i => i >= 0).Distinct())
                             {
                                 StatBucket bucket = _buckets[index];
-                                <circle class="glpi-stats-dot glpi-stats-s1" cx="@F(X(index))" cy="@F(Y(bucket.Opened))" r="4" />
-                                <circle class="glpi-stats-dot glpi-stats-s2" cx="@F(X(index))" cy="@F(Y(bucket.Solved))" r="4" />
-                                <circle class="glpi-stats-dot glpi-stats-s3" cx="@F(X(index))" cy="@F(Y(bucket.Closed))" r="4" />
+                                <circle class="glping-stats-dot glping-stats-s1" cx="@F(X(index))" cy="@F(Y(bucket.Opened))" r="4" />
+                                <circle class="glping-stats-dot glping-stats-s2" cx="@F(X(index))" cy="@F(Y(bucket.Solved))" r="4" />
+                                <circle class="glping-stats-dot glping-stats-s3" cx="@F(X(index))" cy="@F(Y(bucket.Closed))" r="4" />
                             }
 
                             @foreach ((string label, int value, double y) in EndLabels)
                             {
                                 <g>
-                                    <text class="glpi-stats-endlabel" x="@(PlotRight + 10)" y="@F(y + 4)">@label @value</text>
+                                    <text class="glping-stats-endlabel" x="@(PlotRight + 10)" y="@F(y + 4)">@label @value</text>
                                 </g>
                             }
 
                             @for (int index = 0; index < _buckets.Count; index++)
                             {
                                 int captured = index;
-                                <rect class="glpi-stats-hit" x="@F(X(index) - SlotWidth / 2)" y="@PlotTop" width="@F(SlotWidth)"
+                                <rect class="glping-stats-hit" x="@F(X(index) - SlotWidth / 2)" y="@PlotTop" width="@F(SlotWidth)"
                                       height="@(PlotBottom - PlotTop)" @onmouseenter="() => _hovered = captured" />
                             }
                         </svg>
@@ -199,11 +199,11 @@
                         @if (_hovered is { } tooltipIndex && tooltipIndex < _buckets.Count)
                         {
                             StatBucket bucket = _buckets[tooltipIndex];
-                            <div class="glpi-stats-tooltip" style="@TooltipStyle(tooltipIndex)">
+                            <div class="glping-stats-tooltip" style="@TooltipStyle(tooltipIndex)">
                                 <div class="fw-semibold text-capitalize mb-1">@bucket.LongLabel</div>
-                                <div><i class="glpi-stats-key glpi-stats-s1"></i>Ouverts <span class="glpi-stats-num fw-semibold">@bucket.Opened</span></div>
-                                <div><i class="glpi-stats-key glpi-stats-s2"></i>Résolus <span class="glpi-stats-num fw-semibold">@bucket.Solved</span></div>
-                                <div><i class="glpi-stats-key glpi-stats-s3"></i>Clos <span class="glpi-stats-num fw-semibold">@bucket.Closed</span></div>
+                                <div><i class="glping-stats-key glping-stats-s1"></i>Ouverts <span class="glping-stats-num fw-semibold">@bucket.Opened</span></div>
+                                <div><i class="glping-stats-key glping-stats-s2"></i>Résolus <span class="glping-stats-num fw-semibold">@bucket.Solved</span></div>
+                                <div><i class="glping-stats-key glping-stats-s3"></i>Clos <span class="glping-stats-num fw-semibold">@bucket.Closed</span></div>
                             </div>
                         }
                     </div>
@@ -228,7 +228,7 @@
                 </div>
             }
             <div class="col-lg-6">
-                <div class="card glpi-stats-breakdown">
+                <div class="card glping-stats-breakdown">
                     <div class="card-header">
                         <h3 class="card-title">En cours aujourd'hui, par statut</h3>
                     </div>
@@ -247,11 +247,11 @@
                                         <tr>
                                             <td>@label</td>
                                             <td style="width: 55%;">
-                                                <div class="glpi-stats-barcell">
-                                                    <span class="glpi-stats-bartrack">
-                                                        <span class="glpi-stats-bar" style="width: @BarWidth(count, max);"></span>
+                                                <div class="glping-stats-barcell">
+                                                    <span class="glping-stats-bartrack">
+                                                        <span class="glping-stats-bar" style="width: @BarWidth(count, max);"></span>
                                                     </span>
-                                                    <span class="glpi-stats-num">@count</span>
+                                                    <span class="glping-stats-num">@count</span>
                                                 </div>
                                             </td>
                                         </tr>

@@ -3,7 +3,7 @@
 
 <PageTitle>Planning — GlpiNg</PageTitle>
 
-<div class="card glpi-planning">
+<div class="card glping-planning">
     <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
         <div class="btn-list align-items-center">
             <div class="btn-group">
@@ -37,63 +37,63 @@
                 <span class="form-check-label">Tâches terminées</span>
             </label>
 
-            <div class="glpi-planning-legend">
-                <span><i class="glpi-planning-swatch glpi-planning-ticket"></i>Ticket</span>
-                <span><i class="glpi-planning-swatch glpi-planning-problem"></i>Problème</span>
-                <span><i class="glpi-planning-swatch glpi-planning-change"></i>Changement</span>
+            <div class="glping-planning-legend">
+                <span><i class="glping-planning-swatch glping-planning-ticket"></i>Ticket</span>
+                <span><i class="glping-planning-swatch glping-planning-problem"></i>Problème</span>
+                <span><i class="glping-planning-swatch glping-planning-change"></i>Changement</span>
             </div>
         </div>
     </div>
 
-    <div class="glpi-planning-body">
-        <div class="glpi-planning-grid">
-            <div class="glpi-planning-head">
-                <div class="glpi-planning-gutter"></div>
+    <div class="glping-planning-body">
+        <div class="glping-planning-grid">
+            <div class="glping-planning-head">
+                <div class="glping-planning-gutter"></div>
                 @foreach (DateTime day in Days)
                 {
-                    <div class="glpi-planning-dayname @(day == Today ? "is-today" : "")">
+                    <div class="glping-planning-dayname @(day == Today ? "is-today" : "")">
                         @day.ToString("ddd d", French)
                     </div>
                 }
             </div>
 
-            <div class="glpi-planning-hours">
-                <div class="glpi-planning-gutter">
+            <div class="glping-planning-hours">
+                <div class="glping-planning-gutter">
                     @for (int hour = _firstHour; hour < _lastHour; hour++)
                     {
-                        <div class="glpi-planning-hourlabel" style="height: @(HourHeight)px;">@($"{hour:00}:00")</div>
+                        <div class="glping-planning-hourlabel" style="height: @(HourHeight)px;">@($"{hour:00}:00")</div>
                     }
                 </div>
 
                 @foreach (DateTime day in Days)
                 {
-                    <div class="glpi-planning-day @(day == Today ? "is-today" : "")"
+                    <div class="glping-planning-day @(day == Today ? "is-today" : "")"
                          style="height: @((_lastHour - _firstHour) * HourHeight)px; background-size: 100% @(HourHeight)px;">
                         @if (NowLineStyle(day) is { } nowStyle)
                         {
-                            <div class="glpi-planning-now" style="@nowStyle" title="Maintenant"></div>
+                            <div class="glping-planning-now" style="@nowStyle" title="Maintenant"></div>
                         }
 
                         @foreach (PlannedTask entry in _planned.Where(entry => entry.Day == day))
                         {
                             ItilTask task = entry.Task;
                             <button type="button"
-                                    class="glpi-planning-event @TypeCss(task.ItemType) @SizeCss(entry) @(task.State == ItilTaskState.Done ? "is-done" : "")"
+                                    class="glping-planning-event @TypeCss(task.ItemType) @SizeCss(entry) @(task.State == ItilTaskState.Done ? "is-done" : "")"
                                     style="@StyleOf(entry)"
                                     title="@($"{entry.Start:HH:mm}–{entry.End:HH:mm} · {task.Content}\n{entry.Parent}\n{NameOfUser(task.AssignedUserId)}")"
                                     @onclick="() => OpenAsync(task, entry.Parent)">
-                                <span class="glpi-planning-time">
+                                <span class="glping-planning-time">
                                     @($"{entry.Start:HH:mm}–{entry.End:HH:mm}")
                                     @if (task.State == ItilTaskState.Done)
                                     {
                                         <i class="ti ti-check ms-1" title="Terminée"></i>
                                     }
                                 </span>
-                                <span class="glpi-planning-title">@task.Content</span>
-                                <span class="glpi-planning-parent"><i class="ti @TypeIcon(task.ItemType) me-1"></i>@entry.Parent</span>
+                                <span class="glping-planning-title">@task.Content</span>
+                                <span class="glping-planning-parent"><i class="ti @TypeIcon(task.ItemType) me-1"></i>@entry.Parent</span>
                                 @if (_technicianFilter == "all")
                                 {
-                                    <span class="glpi-planning-parent"><i class="ti ti-user me-1"></i>@NameOfUser(task.AssignedUserId)</span>
+                                    <span class="glping-planning-parent"><i class="ti ti-user me-1"></i>@NameOfUser(task.AssignedUserId)</span>
                                 }
                             </button>
                         }
@@ -102,8 +102,8 @@
             </div>
         </div>
 
-        <aside class="glpi-planning-side">
-            <div class="glpi-planning-side-title">
+        <aside class="glping-planning-side">
+            <div class="glping-planning-side-title">
                 <i class="ti ti-calendar-plus me-1"></i>À planifier
                 <span class="badge bg-secondary-lt ms-1">@_unplanned.Count</span>
             </div>
@@ -116,11 +116,11 @@
                 @foreach (UnplannedTask entry in _unplanned)
                 {
                     ItilTask task = entry.Task;
-                    <button type="button" class="glpi-planning-unplanned @TypeCss(task.ItemType)"
+                    <button type="button" class="glping-planning-unplanned @TypeCss(task.ItemType)"
                             @onclick="() => OpenAsync(task, entry.Parent)">
-                        <span class="glpi-planning-title">@task.Content</span>
-                        <span class="glpi-planning-parent"><i class="ti @TypeIcon(task.ItemType) me-1"></i>@entry.Parent</span>
-                        <span class="glpi-planning-parent"><i class="ti ti-user me-1"></i>@NameOfUser(task.AssignedUserId)</span>
+                        <span class="glping-planning-title">@task.Content</span>
+                        <span class="glping-planning-parent"><i class="ti @TypeIcon(task.ItemType) me-1"></i>@entry.Parent</span>
+                        <span class="glping-planning-parent"><i class="ti ti-user me-1"></i>@NameOfUser(task.AssignedUserId)</span>
                     </button>
                 }
             }
@@ -154,15 +154,15 @@
                         </a>
                     </p>
 
-                    <div class="glpi-fiche-field">
+                    <div class="glping-fiche-field">
                         <label>Début</label>
                         <input class="form-control" type="datetime-local" @bind="_editStart" />
                     </div>
-                    <div class="glpi-fiche-field">
+                    <div class="glping-fiche-field">
                         <label>Fin</label>
                         <input class="form-control" type="datetime-local" @bind="_editEnd" />
                     </div>
-                    <div class="glpi-fiche-field">
+                    <div class="glping-fiche-field">
                         <label>Technicien</label>
                         <select class="form-select" @bind="_editUserId">
                             <option value="0">—</option>

@@ -262,7 +262,7 @@ public partial class Index : ComponentBase
         _newProblem = NewBlank();
         _newCategoryId = 0;
 
-        await JS.InvokeVoidAsync("glpiNg.hideModal", "newProblemModal");
+        await JS.InvokeVoidAsync("glping.hideModal", "newProblemModal");
 
         // On ouvre la fiche : c'est là que se fait le travail (analyse, rattachement des incidents),
         // et revenir à la liste obligerait à l'y rechercher.

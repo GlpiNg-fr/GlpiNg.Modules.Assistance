@@ -9,8 +9,8 @@
 }
 else
 {
-    <div class="glpi-fiche">
-        <div class="glpi-fiche-header d-flex align-items-center justify-content-between">
+    <div class="glping-fiche">
+        <div class="glping-fiche-header d-flex align-items-center justify-content-between">
             <h2 class="mb-0">
                 <i class="ti ti-clock-check me-2"></i>@_agreement.Name
                 <span class="badge @(_agreement.Kind == ServiceLevelKind.Sla ? "bg-blue-lt" : "bg-purple-lt") ms-2">
@@ -28,23 +28,23 @@ else
             </div>
         </div>
 
-        <div class="glpi-fiche-layout">
-            <aside class="glpi-fiche-sidebar">
+        <div class="glping-fiche-layout">
+            <aside class="glping-fiche-sidebar">
                 @foreach ((string key, string label, string icon, int? count) in Tabs)
                 {
-                    <button type="button" class="glpi-fiche-tab-item @(_activeTab == key ? "active" : "")"
+                    <button type="button" class="glping-fiche-tab-item @(_activeTab == key ? "active" : "")"
                             @onclick="() => _activeTab = key">
                         <i class="ti @icon"></i>
                         <span>@label</span>
                         @if (count is { } value)
                         {
-                            <span class="glpi-fiche-tab-count">@value</span>
+                            <span class="glping-fiche-tab-count">@value</span>
                         }
                     </button>
                 }
             </aside>
 
-            <div class="glpi-fiche-panel">
+            <div class="glping-fiche-panel">
                 @switch (_activeTab)
                 {
                     case "fiche":
@@ -53,15 +53,15 @@ else
                             <div class="alert alert-danger">@_error</div>
                         }
 
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Nom<span class="text-danger ms-1">*</span></label>
                             <input class="form-control" @bind="_agreement.Name" />
                         </div>
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Niveau de service</label>
                             <input class="form-control" disabled value="@_levelName" />
                         </div>
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Calendrier</label>
                             <input class="form-control" disabled value="@(_calendarName ?? "Aucun (temps réel, 24/7)")" />
                         </div>
@@ -74,13 +74,13 @@ else
 
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Durée</label>
                                     <input class="form-control" type="number" min="1" @bind="_agreement.DurationValue" />
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Unité</label>
                                     <select class="form-select" value="@((int)_agreement.DurationUnit)"
                                             @onchange="@(e => _agreement.DurationUnit = (ServiceLevelUnit)int.Parse(e.Value?.ToString() ?? "2"))">
@@ -103,12 +103,12 @@ else
                             avant la fermeture, pas à 14 h 37 précises.
                         </p>
 
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Commentaire</label>
                             <textarea class="form-control" rows="3" @bind="_agreement.Comment"></textarea>
                         </div>
 
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Tickets engagés</label>
                             <input class="form-control" disabled value="@_ticketCount" />
                         </div>
@@ -150,7 +150,7 @@ else
 
                         @if (_agreement.Escalations.Count == 0)
                         {
-                            <div class="glpi-config-placeholder">
+                            <div class="glping-config-placeholder">
                                 <i class="ti ti-stairs-up"></i>
                                 <p class="mb-0">Aucun niveau d'escalade.</p>
                             </div>

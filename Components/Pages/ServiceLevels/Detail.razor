@@ -9,8 +9,8 @@
 }
 else
 {
-    <div class="glpi-fiche">
-        <div class="glpi-fiche-header d-flex align-items-center justify-content-between">
+    <div class="glping-fiche">
+        <div class="glping-fiche-header d-flex align-items-center justify-content-between">
             <h2 class="mb-0">
                 <i class="ti ti-clipboard-check me-2"></i>@_level.Name
                 @if (_level.CalendarId is null)
@@ -26,23 +26,23 @@ else
             </div>
         </div>
 
-        <div class="glpi-fiche-layout">
-            <aside class="glpi-fiche-sidebar">
+        <div class="glping-fiche-layout">
+            <aside class="glping-fiche-sidebar">
                 @foreach ((string key, string label, string icon, int? count) in Tabs)
                 {
-                    <button type="button" class="glpi-fiche-tab-item @(_activeTab == key ? "active" : "")"
+                    <button type="button" class="glping-fiche-tab-item @(_activeTab == key ? "active" : "")"
                             @onclick="() => _activeTab = key">
                         <i class="ti @icon"></i>
                         <span>@label</span>
                         @if (count is { } value)
                         {
-                            <span class="glpi-fiche-tab-count">@value</span>
+                            <span class="glping-fiche-tab-count">@value</span>
                         }
                     </button>
                 }
             </aside>
 
-            <div class="glpi-fiche-panel">
+            <div class="glping-fiche-panel">
                 @switch (_activeTab)
                 {
                     case "fiche":
@@ -51,11 +51,11 @@ else
                             <div class="alert alert-danger">@_error</div>
                         }
 
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Nom<span class="text-danger ms-1">*</span></label>
                             <input class="form-control" @bind="_level.Name" />
                         </div>
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Calendrier</label>
                             <select class="form-select" @bind="_calendarId">
                                 <option value="0">Aucun (temps réel, 24/7)</option>
@@ -70,7 +70,7 @@ else
                             compris. Le changer ne recalcule pas les échéances déjà posées sur les
                             tickets : une échéance qui bouge n'engage plus personne.
                         </p>
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Commentaire</label>
                             <textarea class="form-control" rows="4" @bind="_level.Comment"></textarea>
                         </div>
@@ -140,7 +140,7 @@ else
 
                         @if (_level.Agreements.Count == 0)
                         {
-                            <div class="glpi-config-placeholder">
+                            <div class="glping-config-placeholder">
                                 <i class="ti ti-clipboard-off"></i>
                                 <p class="mb-0">Aucun engagement : ce niveau de service ne fait rien.</p>
                             </div>

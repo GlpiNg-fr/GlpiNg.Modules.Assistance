@@ -9,8 +9,8 @@
 }
 else
 {
-    <div class="glpi-fiche">
-        <div class="glpi-fiche-header d-flex align-items-center justify-content-between">
+    <div class="glping-fiche">
+        <div class="glping-fiche-header d-flex align-items-center justify-content-between">
             <h2 class="mb-0">
                 <i class="ti @(_ticket.Type == TicketType.Incident ? "ti-alert-circle" : "ti-help-circle") me-2"></i>
                 <span class="text-secondary">#@_ticket.Id</span> @_ticket.Name
@@ -71,23 +71,23 @@ else
             </div>
         </div>
 
-        <div class="glpi-fiche-layout">
-            <aside class="glpi-fiche-sidebar">
+        <div class="glping-fiche-layout">
+            <aside class="glping-fiche-sidebar">
                 @foreach ((string key, string label, string icon, int? count) in Tabs)
                 {
-                    <button type="button" class="glpi-fiche-tab-item @(_activeTab == key ? "active" : "")"
+                    <button type="button" class="glping-fiche-tab-item @(_activeTab == key ? "active" : "")"
                             @onclick="() => _activeTab = key">
                         <i class="ti @icon"></i>
                         <span>@label</span>
                         @if (count is { } value)
                         {
-                            <span class="glpi-fiche-tab-count">@value</span>
+                            <span class="glping-fiche-tab-count">@value</span>
                         }
                     </button>
                 }
             </aside>
 
-            <div class="glpi-fiche-panel">
+            <div class="glping-fiche-panel">
                 @switch (_activeTab)
                 {
                     case "fiche":
@@ -98,15 +98,15 @@ else
 
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Titre<span class="text-danger ms-1">*</span></label>
                                     <input class="form-control" @bind="_ticket.Name" />
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Description</label>
                                     <textarea class="form-control" rows="6" @bind="_ticket.Content"></textarea>
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Type</label>
                                     <select class="form-select" value="@((int)_ticket.Type)"
                                             @onchange="@(e => _ticket.Type = (TicketType)int.Parse(e.Value?.ToString() ?? "1"))">
@@ -116,7 +116,7 @@ else
                                         }
                                     </select>
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Statut</label>
                                     <select class="form-select" value="@((int)_ticket.Status)"
                                             @onchange="OnStatusChanged">
@@ -126,7 +126,7 @@ else
                                         }
                                     </select>
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Catégorie</label>
                                     <select class="form-select" @bind="_categoryId">
                                         <option value="0">—</option>
@@ -138,7 +138,7 @@ else
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Demandeur</label>
                                     <select class="form-select" @bind="_requesterId">
                                         <option value="0">—</option>
@@ -148,12 +148,12 @@ else
                                         }
                                     </select>
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Demandeur externe</label>
                                     <input class="form-control" placeholder="Si ce n'est pas un compte de l'application"
                                            @bind="_ticket.RequesterName" />
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Attribué au technicien</label>
                                     <select class="form-select" @bind="_assignedUserId">
                                         <option value="0">—</option>
@@ -163,7 +163,7 @@ else
                                         }
                                     </select>
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Attribué au groupe</label>
                                     <select class="form-select" @bind="_assignedGroupId">
                                         <option value="0">—</option>
@@ -178,7 +178,7 @@ else
 
                                 <div class="row">
                                     <div class="col-6">
-                                        <div class="glpi-fiche-field">
+                                        <div class="glping-fiche-field">
                                             <label>Urgence</label>
                                             <select class="form-select" value="@((int)_ticket.Urgency)"
                                                     @onchange="OnUrgencyChanged">
@@ -190,7 +190,7 @@ else
                                         </div>
                                     </div>
                                     <div class="col-6">
-                                        <div class="glpi-fiche-field">
+                                        <div class="glping-fiche-field">
                                             <label>Impact</label>
                                             <select class="form-select" value="@((int)_ticket.Impact)"
                                                     @onchange="OnImpactChanged">
@@ -203,7 +203,7 @@ else
                                     </div>
                                 </div>
 
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>
                                         Priorité
                                         @if (!_ticket.IsPriorityManual)
@@ -235,18 +235,18 @@ else
                                     </p>
                                 }
 
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Échéance</label>
                                     <input class="form-control" type="datetime-local" @bind="_ticket.DueDate" />
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Ouvert le</label>
                                     <input class="form-control" disabled
                                            value="@Display.DateTime(_ticket.OpenedAt)" />
                                 </div>
                                 @if (_ticket.SolvedAt is { } solved)
                                 {
-                                    <div class="glpi-fiche-field">
+                                    <div class="glping-fiche-field">
                                         <label>Résolu le</label>
                                         <input class="form-control" disabled
                                                value="@Display.DateTime(solved)" />
@@ -279,7 +279,7 @@ else
 
                         @if (_followups.Count == 0)
                         {
-                            <div class="glpi-config-placeholder">
+                            <div class="glping-config-placeholder">
                                 <i class="ti ti-message-off"></i>
                                 <p class="mb-0">Aucun suivi.</p>
                             </div>
@@ -352,7 +352,7 @@ else
 
                         @if (_tasks.Count == 0)
                         {
-                            <div class="glpi-config-placeholder">
+                            <div class="glping-config-placeholder">
                                 <i class="ti ti-checklist"></i>
                                 <p class="mb-0">Aucune tâche.</p>
                             </div>
@@ -418,12 +418,12 @@ else
                             </div>
                         }
 
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Type de solution</label>
                             <input class="form-control" placeholder="Correctif, contournement, sans suite…"
                                    @bind="_ticket.SolutionType" />
                         </div>
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Solution</label>
                             <textarea class="form-control" rows="6" @bind="_ticket.Solution" @bind:event="oninput"></textarea>
                         </div>
@@ -457,7 +457,7 @@ else
 
                         @if (_agreements.Count == 0)
                         {
-                            <div class="glpi-config-placeholder">
+                            <div class="glping-config-placeholder">
                                 <i class="ti ti-clipboard-off"></i>
                                 <p class="mb-1">Aucun engagement n'est défini.</p>
                                 <a href="/config/service-levels">Créer un niveau de service</a>
@@ -469,7 +469,7 @@ else
                                 <div class="col-md-6">
                                     <h4 class="mb-2">SLA — envers le demandeur</h4>
 
-                                    <div class="glpi-fiche-field">
+                                    <div class="glping-fiche-field">
                                         <label>Prise en charge</label>
                                         <select class="form-select" @bind="_slaTtoId">
                                             <option value="0">—</option>
@@ -479,14 +479,14 @@ else
                                             }
                                         </select>
                                     </div>
-                                    <div class="glpi-fiche-field">
+                                    <div class="glping-fiche-field">
                                         <label>Échéance</label>
-                                        <div class="glpi-fiche-value-box px-2">
+                                        <div class="glping-fiche-value-box px-2">
                                             @DeadlineDisplay(_ticket.TimeToOwn, _ticket.IsTimeToOwnBreached)
                                         </div>
                                     </div>
 
-                                    <div class="glpi-fiche-field">
+                                    <div class="glping-fiche-field">
                                         <label>Résolution</label>
                                         <select class="form-select" @bind="_slaTtrId">
                                             <option value="0">—</option>
@@ -496,9 +496,9 @@ else
                                             }
                                         </select>
                                     </div>
-                                    <div class="glpi-fiche-field">
+                                    <div class="glping-fiche-field">
                                         <label>Échéance</label>
-                                        <div class="glpi-fiche-value-box px-2">
+                                        <div class="glping-fiche-value-box px-2">
                                             @DeadlineDisplay(_ticket.TimeToResolve, _ticket.IsTimeToResolveBreached)
                                         </div>
                                     </div>
@@ -507,7 +507,7 @@ else
                                 <div class="col-md-6">
                                     <h4 class="mb-2">OLA — interne</h4>
 
-                                    <div class="glpi-fiche-field">
+                                    <div class="glping-fiche-field">
                                         <label>Prise en charge</label>
                                         <select class="form-select" @bind="_olaTtoId">
                                             <option value="0">—</option>
@@ -517,14 +517,14 @@ else
                                             }
                                         </select>
                                     </div>
-                                    <div class="glpi-fiche-field">
+                                    <div class="glping-fiche-field">
                                         <label>Échéance</label>
-                                        <div class="glpi-fiche-value-box px-2">
+                                        <div class="glping-fiche-value-box px-2">
                                             @DeadlineDisplay(_ticket.InternalTimeToOwn, _ticket.IsInternalTimeToOwnBreached)
                                         </div>
                                     </div>
 
-                                    <div class="glpi-fiche-field">
+                                    <div class="glping-fiche-field">
                                         <label>Résolution</label>
                                         <select class="form-select" @bind="_olaTtrId">
                                             <option value="0">—</option>
@@ -534,9 +534,9 @@ else
                                             }
                                         </select>
                                     </div>
-                                    <div class="glpi-fiche-field">
+                                    <div class="glping-fiche-field">
                                         <label>Échéance</label>
-                                        <div class="glpi-fiche-value-box px-2">
+                                        <div class="glping-fiche-value-box px-2">
                                             @DeadlineDisplay(_ticket.InternalTimeToResolve, _ticket.IsInternalTimeToResolveBreached)
                                         </div>
                                     </div>
@@ -553,9 +553,9 @@ else
 
                             <hr />
 
-                            <div class="glpi-fiche-field">
+                            <div class="glping-fiche-field">
                                 <label>Pris en charge le</label>
-                                <div class="glpi-fiche-value-box px-2">
+                                <div class="glping-fiche-value-box px-2">
                                     @(_ticket.TakenIntoAccountAt is { } taken
                                         ? Display.DateTime(taken)
                                         : "Pas encore")
@@ -605,7 +605,7 @@ else
 
                         @if (_problems.Count == 0)
                         {
-                            <div class="glpi-config-placeholder">
+                            <div class="glping-config-placeholder">
                                 <i class="ti ti-bulb-off"></i>
                                 <p class="mb-0">Aucun problème rattaché.</p>
                             </div>

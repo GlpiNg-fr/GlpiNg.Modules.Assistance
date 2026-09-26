@@ -28,7 +28,7 @@ public partial class Index : ComponentBase, IDisposable
     private IJSRuntime JS { get; set; } = null!;
 
     // Géométrie du graphique, en pixels : le SVG est dessiné à la largeur réelle de sa carte,
-    // mesurée par glpiNg.observeWidth, pour que le texte ne soit jamais étiré avec lui.
+    // mesurée par glping.observeWidth, pour que le texte ne soit jamais étiré avec lui.
     private int _chartWidth = 960;
     private const int ChartHeight = 260;
     private const int PlotLeft = 44;
@@ -99,7 +99,7 @@ public partial class Index : ComponentBase, IDisposable
 
         try
         {
-            await JS.InvokeVoidAsync("glpiNg.observeWidth", _chartRef, _selfRef, nameof(OnChartResized));
+            await JS.InvokeVoidAsync("glping.observeWidth", _chartRef, _selfRef, nameof(OnChartResized));
         }
         catch (JSDisconnectedException)
         {

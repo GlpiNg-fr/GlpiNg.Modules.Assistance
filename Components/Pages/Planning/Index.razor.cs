@@ -295,9 +295,9 @@ public partial class Index : ComponentBase
 
     private static string TypeCss(string itemType) => itemType switch
     {
-        ItemTypes.Ticket => "glpi-planning-ticket",
-        ItemTypes.Problem => "glpi-planning-problem",
-        ItemTypes.Change => "glpi-planning-change",
+        ItemTypes.Ticket => "glping-planning-ticket",
+        ItemTypes.Problem => "glping-planning-problem",
+        ItemTypes.Change => "glping-planning-change",
         _ => string.Empty,
     };
 
@@ -442,7 +442,7 @@ public partial class Index : ComponentBase
         _editDone = task.State == ItilTaskState.Done;
         _editError = null;
 
-        await JS.InvokeVoidAsync("glpiNg.showModal", "planTaskModal");
+        await JS.InvokeVoidAsync("glping.showModal", "planTaskModal");
     }
 
     private async Task SaveTaskAsync()
@@ -514,7 +514,7 @@ public partial class Index : ComponentBase
         await db.SaveChangesAsync();
 
         _editing = null;
-        await JS.InvokeVoidAsync("glpiNg.hideModal", "planTaskModal");
+        await JS.InvokeVoidAsync("glping.hideModal", "planTaskModal");
         await LoadAsync();
     }
 

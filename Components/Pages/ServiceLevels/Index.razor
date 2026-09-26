@@ -3,9 +3,9 @@
 
 <PageTitle>Niveaux de services — GlpiNg</PageTitle>
 
-<div class="glpi-list-page">
+<div class="glping-list-page">
 <div class="card">
-    <div class="card-header d-flex align-items-center justify-content-between glpi-list-toolbar">
+    <div class="card-header d-flex align-items-center justify-content-between glping-list-toolbar">
         <div class="btn-list align-items-center">
             <div class="dropdown">
                 <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
@@ -133,11 +133,11 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
             </div>
             <div class="modal-body">
-                <div class="glpi-fiche-field">
+                <div class="glping-fiche-field">
                     <label>Nom<span class="text-danger ms-1" title="Champ obligatoire">*</span></label>
                     <input class="form-control" @bind="_newLevel.Name" @bind:event="oninput" />
                 </div>
-                <div class="glpi-fiche-field">
+                <div class="glping-fiche-field">
                     <label>Calendrier</label>
                     <select class="form-select" @bind="_newCalendarId">
                         <option value="0">Aucun (temps réel, 24/7)</option>
@@ -147,7 +147,7 @@
                         }
                     </select>
                 </div>
-                <div class="glpi-fiche-field">
+                <div class="glping-fiche-field">
                     <label>Commentaire</label>
                     <textarea class="form-control" rows="3" @bind="_newLevel.Comment"></textarea>
                 </div>

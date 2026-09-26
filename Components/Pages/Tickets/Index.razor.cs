@@ -268,7 +268,7 @@ public partial class Index : ComponentBase
         _newCategoryId = 0;
         _newRequesterId = 0;
 
-        await JS.InvokeVoidAsync("glpiNg.hideModal", "newTicketModal");
+        await JS.InvokeVoidAsync("glping.hideModal", "newTicketModal");
 
         // On ouvre la fiche : un ticket qu'on vient de saisir se complète tout de suite
         // (attribution, impact, échéance), et revenir à la liste obligerait à l'y rechercher.

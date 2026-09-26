@@ -3,9 +3,9 @@
 
 <PageTitle>Problèmes — GlpiNg</PageTitle>
 
-<div class="glpi-list-page">
+<div class="glping-list-page">
 <div class="card">
-    <div class="card-header d-flex align-items-center justify-content-between glpi-list-toolbar">
+    <div class="card-header d-flex align-items-center justify-content-between glping-list-toolbar">
         <div class="btn-list align-items-center">
             <div class="dropdown">
                 <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
@@ -150,17 +150,17 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
             </div>
             <div class="modal-body">
-                <div class="glpi-fiche-field">
+                <div class="glping-fiche-field">
                     <label>Titre<span class="text-danger ms-1" title="Champ obligatoire">*</span></label>
                     <input class="form-control" @bind="_newProblem.Name" @bind:event="oninput" />
                 </div>
-                <div class="glpi-fiche-field">
+                <div class="glping-fiche-field">
                     <label>Énoncé</label>
                     <textarea class="form-control" rows="4" @bind="_newProblem.Content"></textarea>
                 </div>
                 <div class="row">
                     <div class="col-md-6">
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Urgence</label>
                             <select class="form-select" value="@((int)_newProblem.Urgency)"
                                     @onchange="@(e => _newProblem.Urgency = (ItilLevel)int.Parse(e.Value?.ToString() ?? "3"))">
@@ -172,7 +172,7 @@
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Catégorie</label>
                             <select class="form-select" @bind="_newCategoryId">
                                 <option value="0">—</option>

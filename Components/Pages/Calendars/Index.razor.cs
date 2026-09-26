@@ -96,7 +96,7 @@ public partial class Index : ComponentBase
         _newCalendar = NewBlank();
         _seedStandardWeek = true;
 
-        await JS.InvokeVoidAsync("glpiNg.hideModal", "newCalendarModal");
+        await JS.InvokeVoidAsync("glping.hideModal", "newCalendarModal");
         await LoadAsync();
     }
 

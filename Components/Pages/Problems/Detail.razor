@@ -9,8 +9,8 @@
 }
 else
 {
-    <div class="glpi-fiche">
-        <div class="glpi-fiche-header d-flex align-items-center justify-content-between">
+    <div class="glping-fiche">
+        <div class="glping-fiche-header d-flex align-items-center justify-content-between">
             <h2 class="mb-0">
                 <i class="ti ti-bulb me-2"></i>
                 <span class="text-secondary">#@_problem.Id</span> @_problem.Name
@@ -58,23 +58,23 @@ else
             </div>
         </div>
 
-        <div class="glpi-fiche-layout">
-            <aside class="glpi-fiche-sidebar">
+        <div class="glping-fiche-layout">
+            <aside class="glping-fiche-sidebar">
                 @foreach ((string key, string label, string icon, int? count) in Tabs)
                 {
-                    <button type="button" class="glpi-fiche-tab-item @(_activeTab == key ? "active" : "")"
+                    <button type="button" class="glping-fiche-tab-item @(_activeTab == key ? "active" : "")"
                             @onclick="() => _activeTab = key">
                         <i class="ti @icon"></i>
                         <span>@label</span>
                         @if (count is { } value)
                         {
-                            <span class="glpi-fiche-tab-count">@value</span>
+                            <span class="glping-fiche-tab-count">@value</span>
                         }
                     </button>
                 }
             </aside>
 
-            <div class="glpi-fiche-panel">
+            <div class="glping-fiche-panel">
                 @switch (_activeTab)
                 {
                     case "fiche":
@@ -85,15 +85,15 @@ else
 
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Titre<span class="text-danger ms-1">*</span></label>
                                     <input class="form-control" @bind="_problem.Name" />
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Énoncé</label>
                                     <textarea class="form-control" rows="6" @bind="_problem.Content"></textarea>
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Statut</label>
                                     <select class="form-select" value="@((int)_problem.Status)" @onchange="OnStatusChanged">
                                         @foreach (ProblemStatus status in ProblemLabels.Lifecycle)
@@ -102,7 +102,7 @@ else
                                         }
                                     </select>
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Catégorie</label>
                                     <select class="form-select" @bind="_categoryId">
                                         <option value="0">—</option>
@@ -114,7 +114,7 @@ else
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Rédacteur</label>
                                     <select class="form-select" @bind="_authorId">
                                         <option value="0">—</option>
@@ -124,7 +124,7 @@ else
                                         }
                                     </select>
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Attribué au technicien</label>
                                     <select class="form-select" @bind="_assignedUserId">
                                         <option value="0">—</option>
@@ -134,7 +134,7 @@ else
                                         }
                                     </select>
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Attribué au groupe</label>
                                     <select class="form-select" @bind="_assignedGroupId">
                                         <option value="0">—</option>
@@ -149,7 +149,7 @@ else
 
                                 <div class="row">
                                     <div class="col-6">
-                                        <div class="glpi-fiche-field">
+                                        <div class="glping-fiche-field">
                                             <label>Urgence</label>
                                             <select class="form-select" value="@((int)_problem.Urgency)"
                                                     @onchange="OnUrgencyChanged">
@@ -161,7 +161,7 @@ else
                                         </div>
                                     </div>
                                     <div class="col-6">
-                                        <div class="glpi-fiche-field">
+                                        <div class="glping-fiche-field">
                                             <label>Impact</label>
                                             <select class="form-select" value="@((int)_problem.Impact)"
                                                     @onchange="OnImpactChanged">
@@ -174,7 +174,7 @@ else
                                     </div>
                                 </div>
 
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>
                                         Priorité
                                         @if (!_problem.IsPriorityManual)
@@ -204,18 +204,18 @@ else
                                     <p class="hint">Forcée à la main : elle ne suivra plus l'urgence ni l'impact.</p>
                                 }
 
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Échéance</label>
                                     <input class="form-control" type="datetime-local" @bind="_problem.DueDate" />
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Ouvert le</label>
                                     <input class="form-control" disabled
                                            value="@Display.DateTime(_problem.OpenedAt)" />
                                 </div>
                                 @if (_problem.SolvedAt is { } solved)
                                 {
-                                    <div class="glpi-fiche-field">
+                                    <div class="glping-fiche-field">
                                         <label>Résolu le</label>
                                         <input class="form-control" disabled
                                                value="@Display.DateTime(solved)" />
@@ -232,22 +232,22 @@ else
                             se répare, le problème se comprend.
                         </p>
 
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Symptômes</label>
                             <textarea class="form-control" rows="5" placeholder="Ce que rapportent les incidents…"
                                       @bind="_problem.SymptomContent"></textarea>
                         </div>
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Cause</label>
                             <textarea class="form-control" rows="5" placeholder="La cause racine, une fois trouvée…"
                                       @bind="_problem.CauseContent"></textarea>
                         </div>
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Conséquences</label>
                             <textarea class="form-control" rows="5" placeholder="Périmètre touché tant que le problème dure…"
                                       @bind="_problem.ImpactContent"></textarea>
                         </div>
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Contournement</label>
                             <textarea class="form-control" rows="5"
                                       placeholder="Ce qui rend le service acceptable en attendant le correctif…"
@@ -298,7 +298,7 @@ else
 
                         @if (_tickets.Count == 0)
                         {
-                            <div class="glpi-config-placeholder">
+                            <div class="glping-config-placeholder">
                                 <i class="ti ti-ticket-off"></i>
                                 <p class="mb-0">Aucun incident rattaché.</p>
                             </div>
@@ -377,7 +377,7 @@ else
 
                         @if (_followups.Count == 0)
                         {
-                            <div class="glpi-config-placeholder">
+                            <div class="glping-config-placeholder">
                                 <i class="ti ti-message-off"></i>
                                 <p class="mb-0">Aucun suivi.</p>
                             </div>
@@ -449,7 +449,7 @@ else
 
                         @if (_tasks.Count == 0)
                         {
-                            <div class="glpi-config-placeholder">
+                            <div class="glping-config-placeholder">
                                 <i class="ti ti-checklist"></i>
                                 <p class="mb-0">Aucune tâche.</p>
                             </div>
@@ -524,12 +524,12 @@ else
                             </div>
                         }
 
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Type de solution</label>
                             <input class="form-control" placeholder="Correctif éditeur, changement de configuration…"
                                    @bind="_problem.SolutionType" />
                         </div>
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Solution</label>
                             <textarea class="form-control" rows="6" @bind="_problem.Solution" @bind:event="oninput"></textarea>
                         </div>

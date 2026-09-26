@@ -139,7 +139,7 @@ public partial class Index : ComponentBase
         _newLevel = NewBlank();
         _newCalendarId = 0;
 
-        await JS.InvokeVoidAsync("glpiNg.hideModal", "newServiceLevelModal");
+        await JS.InvokeVoidAsync("glping.hideModal", "newServiceLevelModal");
         await LoadAsync();
     }
 

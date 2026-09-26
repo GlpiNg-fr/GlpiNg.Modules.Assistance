@@ -9,8 +9,8 @@
 }
 else
 {
-    <div class="glpi-fiche">
-        <div class="glpi-fiche-header d-flex align-items-center justify-content-between">
+    <div class="glping-fiche">
+        <div class="glping-fiche-header d-flex align-items-center justify-content-between">
             <h2 class="mb-0">
                 <i class="ti ti-replace me-2"></i>
                 <span class="text-secondary">#@_change.Id</span> @_change.Name
@@ -65,23 +65,23 @@ else
             </div>
         </div>
 
-        <div class="glpi-fiche-layout">
-            <aside class="glpi-fiche-sidebar">
+        <div class="glping-fiche-layout">
+            <aside class="glping-fiche-sidebar">
                 @foreach ((string key, string label, string icon, int? count) in Tabs)
                 {
-                    <button type="button" class="glpi-fiche-tab-item @(_activeTab == key ? "active" : "")"
+                    <button type="button" class="glping-fiche-tab-item @(_activeTab == key ? "active" : "")"
                             @onclick="() => _activeTab = key">
                         <i class="ti @icon"></i>
                         <span>@label</span>
                         @if (count is { } value)
                         {
-                            <span class="glpi-fiche-tab-count">@value</span>
+                            <span class="glping-fiche-tab-count">@value</span>
                         }
                     </button>
                 }
             </aside>
 
-            <div class="glpi-fiche-panel">
+            <div class="glping-fiche-panel">
                 @switch (_activeTab)
                 {
                     case "fiche":
@@ -92,15 +92,15 @@ else
 
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Titre<span class="text-danger ms-1">*</span></label>
                                     <input class="form-control" @bind="_change.Name" />
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Description</label>
                                     <textarea class="form-control" rows="6" @bind="_change.Content"></textarea>
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Statut</label>
                                     <select class="form-select" value="@((int)_change.Status)" @onchange="OnStatusChanged">
                                         @foreach (ChangeStatus status in ChangeLabels.Lifecycle)
@@ -109,7 +109,7 @@ else
                                         }
                                     </select>
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Catégorie</label>
                                     <select class="form-select" @bind="_categoryId">
                                         <option value="0">—</option>
@@ -121,7 +121,7 @@ else
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Rédacteur</label>
                                     <select class="form-select" @bind="_authorId">
                                         <option value="0">—</option>
@@ -131,7 +131,7 @@ else
                                         }
                                     </select>
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Attribué au technicien</label>
                                     <select class="form-select" @bind="_assignedUserId">
                                         <option value="0">—</option>
@@ -141,7 +141,7 @@ else
                                         }
                                     </select>
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Attribué au groupe</label>
                                     <select class="form-select" @bind="_assignedGroupId">
                                         <option value="0">—</option>
@@ -156,7 +156,7 @@ else
 
                                 <div class="row">
                                     <div class="col-6">
-                                        <div class="glpi-fiche-field">
+                                        <div class="glping-fiche-field">
                                             <label>Urgence</label>
                                             <select class="form-select" value="@((int)_change.Urgency)"
                                                     @onchange="OnUrgencyChanged">
@@ -168,7 +168,7 @@ else
                                         </div>
                                     </div>
                                     <div class="col-6">
-                                        <div class="glpi-fiche-field">
+                                        <div class="glping-fiche-field">
                                             <label>Impact</label>
                                             <select class="form-select" value="@((int)_change.Impact)"
                                                     @onchange="OnImpactChanged">
@@ -181,7 +181,7 @@ else
                                     </div>
                                 </div>
 
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>
                                         Priorité
                                         @if (!_change.IsPriorityManual)
@@ -211,18 +211,18 @@ else
                                     <p class="hint">Forcée à la main : elle ne suivra plus l'urgence ni l'impact.</p>
                                 }
 
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Échéance</label>
                                     <input class="form-control" type="datetime-local" @bind="_change.DueDate" />
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Ouvert le</label>
                                     <input class="form-control" disabled
                                            value="@Display.DateTime(_change.OpenedAt)" />
                                 </div>
                                 @if (_change.SolvedAt is { } solved)
                                 {
-                                    <div class="glpi-fiche-field">
+                                    <div class="glping-fiche-field">
                                         <label>Appliqué le</label>
                                         <input class="form-control" disabled
                                                value="@Display.DateTime(solved)" />
@@ -238,13 +238,13 @@ else
                             qu'on vérifie pour s'assurer qu'il est sans risque.
                         </p>
 
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Impacts</label>
                             <textarea class="form-control" rows="6"
                                       placeholder="Services, utilisateurs, dépendances touchés ; interruption prévue…"
                                       @bind="_change.ImpactContent"></textarea>
                         </div>
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Liste de contrôle</label>
                             <textarea class="form-control" rows="6"
                                       placeholder="Ce qu'on vérifie avant de décider : prérequis, compatibilité, sauvegardes…"
@@ -258,19 +258,19 @@ else
                             ce qu'on coche le jour J.
                         </p>
 
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Plan de déploiement</label>
                             <textarea class="form-control" rows="6"
                                       placeholder="Étapes d'application, ordre, fenêtre d'intervention…"
                                       @bind="_change.RolloutPlanContent"></textarea>
                         </div>
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Plan de retour arrière</label>
                             <textarea class="form-control" rows="6"
                                       placeholder="Comment revenir à l'état d'avant, et à partir de quand le décider…"
                                       @bind="_change.BackoutPlanContent"></textarea>
                         </div>
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Checklist</label>
                             <textarea class="form-control" rows="6"
                                       placeholder="Les points à cocher pendant et après l'application…"
@@ -331,7 +331,7 @@ else
 
                         @if (_validations.Count == 0)
                         {
-                            <div class="glpi-config-placeholder">
+                            <div class="glping-config-placeholder">
                                 <i class="ti ti-gavel"></i>
                                 <p class="mb-0">Aucune approbation demandée.</p>
                             </div>
@@ -433,7 +433,7 @@ else
 
                         @if (_tickets.Count == 0)
                         {
-                            <div class="glpi-config-placeholder">
+                            <div class="glping-config-placeholder">
                                 <i class="ti ti-ticket-off"></i>
                                 <p class="mb-0">Aucun ticket rattaché.</p>
                             </div>
@@ -509,7 +509,7 @@ else
 
                         @if (_problems.Count == 0)
                         {
-                            <div class="glpi-config-placeholder">
+                            <div class="glping-config-placeholder">
                                 <i class="ti ti-bulb-off"></i>
                                 <p class="mb-0">Aucun problème rattaché.</p>
                             </div>
@@ -578,7 +578,7 @@ else
 
                         @if (_followups.Count == 0)
                         {
-                            <div class="glpi-config-placeholder">
+                            <div class="glping-config-placeholder">
                                 <i class="ti ti-message-off"></i>
                                 <p class="mb-0">Aucun suivi.</p>
                             </div>
@@ -650,7 +650,7 @@ else
 
                         @if (_tasks.Count == 0)
                         {
-                            <div class="glpi-config-placeholder">
+                            <div class="glping-config-placeholder">
                                 <i class="ti ti-checklist"></i>
                                 <p class="mb-0">Aucune tâche.</p>
                             </div>
@@ -746,12 +746,12 @@ else
                             }
                         }
 
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Type de solution</label>
                             <input class="form-control" placeholder="Mise à jour, changement de configuration…"
                                    @bind="_change.SolutionType" />
                         </div>
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Compte rendu d'application</label>
                             <textarea class="form-control" rows="6" @bind="_change.Solution" @bind:event="oninput"></textarea>
                         </div>

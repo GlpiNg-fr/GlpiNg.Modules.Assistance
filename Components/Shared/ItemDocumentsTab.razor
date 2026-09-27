@@ -5,12 +5,11 @@
    balisage est le même partout, seul le couple type/identifiant change. *@
 
 <p class="text-secondary">
-    Fichiers rattachés à cet élément. Un document déjà présent dans GlpiNg peut être rattaché sans
-    être téléversé une seconde fois.
+    @T("Fichiers rattachés à cet élément. Un document déjà présent dans GlpiNg peut être rattaché sans être téléversé une seconde fois.")
 </p>
 
 <div class="mb-3">
-    <label class="form-label">Ajouter un fichier</label>
+    <label class="form-label">@T("Ajouter un fichier")</label>
     <InputFile class="form-control" OnChange="OnFileSelectedAsync" />
     @if (_error is not null)
     {
@@ -22,7 +21,7 @@
 {
     <div class="glping-config-placeholder">
         <i class="ti ti-file-off"></i>
-        <p class="mb-0">Aucun document rattaché.</p>
+        <p class="mb-0">@T("Aucun document rattaché.")</p>
     </div>
 }
 else
@@ -31,10 +30,10 @@ else
         <table class="table table-vcenter">
             <thead>
                 <tr>
-                    <th>Nom</th>
-                    <th>Fichier</th>
-                    <th>Taille</th>
-                    <th>Ajouté le</th>
+                    <th>@T("Nom")</th>
+                    <th>@T("Fichier")</th>
+                    <th>@T("Taille")</th>
+                    <th>@T("Ajouté le")</th>
                     <th style="width: 6rem;"></th>
                 </tr>
             </thead>
@@ -49,15 +48,15 @@ else
                         <td class="text-nowrap">
                             @if (!document.IsContentMissing)
                             {
-                                <a class="btn btn-icon btn-sm" title="Télécharger" href="@Documents.DownloadUrl(document.Id)">
+                                <a class="btn btn-icon btn-sm" title="@(T("Télécharger"))" href="@Documents.DownloadUrl(document.Id)">
                                     <i class="ti ti-download"></i>
                                 </a>
                             }
                             else
                             {
-                                <span class="badge bg-warning-lt">Fichier absent</span>
+                                <span class="badge bg-warning-lt">@T("Fichier absent")</span>
                             }
-                            <button type="button" class="btn btn-icon btn-sm text-danger" title="Détacher"
+                            <button type="button" class="btn btn-icon btn-sm text-danger" title="@(T("Détacher"))"
                                     @onclick="() => DetachAsync(document.Id)">
                                 <i class="ti ti-unlink"></i>
                             </button>
@@ -103,7 +102,7 @@ else
 
         if (file.Size > MaxBytes)
         {
-            _error = $"Fichier trop volumineux ({FormatSize(file.Size)}) : {FormatSize(MaxBytes)} au maximum.";
+            _error = T("Fichier trop volumineux ({0}) : {1} au maximum.", FormatSize(file.Size), FormatSize(MaxBytes));
             return;
         }
 
@@ -124,7 +123,7 @@ else
     private static string FormatSize(long bytes) => bytes switch
     {
         < 1024 => $"{bytes} o",
-        < 1024 * 1024 => $"{bytes / 1024d:0.#} Ko",
-        _ => $"{bytes / (1024d * 1024d):0.#} Mo",
+        < 1024 * 1024 => T("{0:0.#} Ko", bytes / 1024d),
+        _ => T("{0:0.#} Mo", bytes / (1024d * 1024d)),
     };
 }

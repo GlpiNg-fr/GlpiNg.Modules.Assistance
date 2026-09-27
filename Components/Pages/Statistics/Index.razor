@@ -2,32 +2,32 @@
 @rendermode InteractiveServer
 @using GlpiNg.Modules.Assistance.Services
 
-<PageTitle>Statistiques — GlpiNg</PageTitle>
+<PageTitle>@T("Statistiques — GlpiNg")</PageTitle>
 
 <div class="glping-stats">
     @* Tous les filtres sur une ligne, au-dessus de ce qu'ils filtrent. *@
     <div class="card mb-3">
         <div class="card-body d-flex flex-wrap align-items-center gap-2">
             <select class="form-select" style="width: auto;" value="@_itemType" @onchange="OnItemTypeChangedAsync">
-                <option value="tickets">Tickets</option>
-                <option value="problems">Problèmes</option>
-                <option value="changes">Changements</option>
+                <option value="tickets">@T("Tickets")</option>
+                <option value="problems">@T("Problèmes")</option>
+                <option value="changes">@T("Changements")</option>
             </select>
 
             <select class="form-select" style="width: auto;" value="@_preset" @onchange="OnPresetChanged">
-                <option value="30d">30 derniers jours</option>
-                <option value="3m">3 derniers mois</option>
-                <option value="12m">12 derniers mois</option>
-                <option value="year">Année en cours</option>
-                <option value="lastyear">Année précédente</option>
-                <option value="custom">Personnalisée</option>
+                <option value="30d">@T("30 derniers jours")</option>
+                <option value="3m">@T("3 derniers mois")</option>
+                <option value="12m">@T("12 derniers mois")</option>
+                <option value="year">@T("Année en cours")</option>
+                <option value="lastyear">@T("Année précédente")</option>
+                <option value="custom">@T("Personnalisée")</option>
             </select>
 
             <div class="d-flex align-items-center gap-2">
-                <span class="text-secondary">du</span>
+                <span class="text-secondary">@T("du")</span>
                 <input type="date" class="form-control" style="width: auto;"
                        value="@_from.ToString("yyyy-MM-dd")" @onchange="OnFromChanged" />
-                <span class="text-secondary">au</span>
+                <span class="text-secondary">@T("au")</span>
                 <input type="date" class="form-control" style="width: auto;"
                        value="@_to.ToString("yyyy-MM-dd")" @onchange="OnToChanged" />
             </div>
@@ -38,51 +38,51 @@
     {
         <div class="glping-stats-tiles mb-3">
             <div class="glping-stats-tile">
-                <div class="glping-stats-tile-label">Ouverts sur la période</div>
-                <div class="glping-stats-tile-value">@summary.Opened.ToString("N0", French)</div>
+                <div class="glping-stats-tile-label">@T("Ouverts sur la période")</div>
+                <div class="glping-stats-tile-value">@summary.Opened.ToString("N0", UiCulture)</div>
             </div>
             <div class="glping-stats-tile">
-                <div class="glping-stats-tile-label">Résolus sur la période</div>
-                <div class="glping-stats-tile-value">@summary.Solved.ToString("N0", French)</div>
+                <div class="glping-stats-tile-label">@T("Résolus sur la période")</div>
+                <div class="glping-stats-tile-value">@summary.Solved.ToString("N0", UiCulture)</div>
             </div>
             <div class="glping-stats-tile">
-                <div class="glping-stats-tile-label">Clos sur la période</div>
-                <div class="glping-stats-tile-value">@summary.Closed.ToString("N0", French)</div>
+                <div class="glping-stats-tile-label">@T("Clos sur la période")</div>
+                <div class="glping-stats-tile-value">@summary.Closed.ToString("N0", UiCulture)</div>
             </div>
             <div class="glping-stats-tile">
-                <div class="glping-stats-tile-label">En cours aujourd'hui</div>
-                <div class="glping-stats-tile-value">@summary.Backlog.ToString("N0", French)</div>
+                <div class="glping-stats-tile-label">@T("En cours aujourd'hui")</div>
+                <div class="glping-stats-tile-value">@summary.Backlog.ToString("N0", UiCulture)</div>
                 @if (summary.Overdue > 0)
                 {
                     @* Statut : icône et libellé, jamais la couleur seule. *@
                     <div class="glping-stats-tile-note text-danger">
-                        <i class="ti ti-alert-triangle me-1"></i>@summary.Overdue en retard
+                        <i class="ti ti-alert-triangle me-1"></i>@T("{0} en retard", summary.Overdue)
                     </div>
                 }
                 else
                 {
                     <div class="glping-stats-tile-note text-secondary">
-                        <i class="ti ti-circle-check me-1"></i>aucun en retard
+                        <i class="ti ti-circle-check me-1"></i>@T("aucun en retard")
                     </div>
                 }
             </div>
             <div class="glping-stats-tile">
-                <div class="glping-stats-tile-label">Délai moyen de résolution</div>
+                <div class="glping-stats-tile-label">@T("Délai moyen de résolution")</div>
                 <div class="glping-stats-tile-value">@ItilStatistics.FormatDuration(summary.AverageResolution)</div>
                 @if (summary.MedianResolution is not null)
                 {
-                    <div class="glping-stats-tile-note text-secondary">médiane @ItilStatistics.FormatDuration(summary.MedianResolution)</div>
+                    <div class="glping-stats-tile-note text-secondary">@T("médiane {0}", ItilStatistics.FormatDuration(summary.MedianResolution))</div>
                 }
             </div>
             @if (IsTickets)
             {
                 <div class="glping-stats-tile">
-                    <div class="glping-stats-tile-label">Résolus dans les délais (SLA)</div>
+                    <div class="glping-stats-tile-label">@T("Résolus dans les délais (SLA)")</div>
                     <div class="glping-stats-tile-value">@Percent(summary.SlaMet, summary.SlaMeasured)</div>
                     <div class="glping-stats-tile-note text-secondary">
                         @(summary.SlaMeasured == 0
-                            ? "aucun ticket résolu sous engagement"
-                            : $"{summary.SlaMet} sur {summary.SlaMeasured} sous engagement")
+                            ? T("aucun ticket résolu sous engagement")
+                            : T("{0} sur {1} sous engagement", summary.SlaMet, summary.SlaMeasured))
                     </div>
                 </div>
             }
@@ -91,24 +91,24 @@
         <div class="card mb-3">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <div>
-                    <h3 class="card-title mb-0">Évolution des @ItemsLabel</h3>
+                    <h3 class="card-title mb-0">@T("Évolution des {0}", ItemsLabel)</h3>
                     <div class="text-secondary small">
-                        Par @(ItilStatistics.BucketSizeFor(_from, ToExclusive) switch
+                        @(T("Par {0} — un même {1} compte à sa date d'ouverture, de résolution et de clôture.", ItilStatistics.BucketSizeFor(_from, ToExclusive) switch
                         {
-                            StatBucketSize.Day => "jour",
-                            StatBucketSize.Week => "semaine",
-                            _ => "mois",
-                        }) — un même @ItemsLabel.TrimEnd('s') compte à sa date d'ouverture, de résolution et de clôture.
+                            StatBucketSize.Day => T("jour"),
+                            StatBucketSize.Week => T("semaine"),
+                            _ => T("mois"),
+                        }, ItemsLabel.TrimEnd('s')))
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-3">
                     <div class="glping-stats-legend">
-                        <span><i class="glping-stats-key glping-stats-s1"></i>Ouverts</span>
-                        <span><i class="glping-stats-key glping-stats-s2"></i>Résolus</span>
-                        <span><i class="glping-stats-key glping-stats-s3"></i>Clos</span>
+                        <span><i class="glping-stats-key glping-stats-s1"></i>@T("Ouverts")</span>
+                        <span><i class="glping-stats-key glping-stats-s2"></i>@T("Résolus")</span>
+                        <span><i class="glping-stats-key glping-stats-s3"></i>@T("Clos")</span>
                     </div>
                     <button type="button" class="btn btn-sm" @onclick="() => _showTable = !_showTable">
-                        <i class="ti @(_showTable ? "ti-chart-line" : "ti-table") me-1"></i>@(_showTable ? "Graphique" : "Tableau")
+                        <i class="ti @(_showTable ? "ti-chart-line" : "ti-table") me-1"></i>@(_showTable ? T("Graphique") : T("Tableau"))
                     </button>
                 </div>
             </div>
@@ -119,10 +119,10 @@
                         <table class="table table-sm table-vcenter mb-0">
                             <thead>
                                 <tr>
-                                    <th>Période</th>
-                                    <th class="text-end">Ouverts</th>
-                                    <th class="text-end">Résolus</th>
-                                    <th class="text-end">Clos</th>
+                                    <th>@T("Période")</th>
+                                    <th class="text-end">@T("Ouverts")</th>
+                                    <th class="text-end">@T("Résolus")</th>
+                                    <th class="text-end">@T("Clos")</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -143,7 +143,7 @@
                 {
                     <div class="glping-stats-chart" @ref="_chartRef" @onmouseleave="() => _hovered = null">
                         <svg viewBox="0 0 @ChartWidth @ChartHeight" width="@ChartWidth" height="@ChartHeight" role="img"
-                             aria-label="@($"Évolution des {ItemsLabel} ouverts, résolus et clos")">
+                             aria-label="@(T("Évolution des {0} ouverts, résolus et clos", ItemsLabel))">
                             @* Chaque <text> SVG est posé dans un <g> : en tête d'un bloc de code, Razor
                                prendrait la balise pour sa propre transition <text>. *@
                             @foreach (int tick in _yTicks)
@@ -151,7 +151,7 @@
                                 double y = Y(tick);
                                 <g>
                                     <line class="glping-stats-grid" x1="@PlotLeft" x2="@PlotRight" y1="@F(y)" y2="@F(y)" />
-                                    <text class="glping-stats-axis" x="@(PlotLeft - 8)" y="@F(y + 4)" text-anchor="end">@tick.ToString("N0", French)</text>
+                                    <text class="glping-stats-axis" x="@(PlotLeft - 8)" y="@F(y + 4)" text-anchor="end">@tick.ToString("N0", UiCulture)</text>
                                 </g>
                             }
 
@@ -201,9 +201,9 @@
                             StatBucket bucket = _buckets[tooltipIndex];
                             <div class="glping-stats-tooltip" style="@TooltipStyle(tooltipIndex)">
                                 <div class="fw-semibold text-capitalize mb-1">@bucket.LongLabel</div>
-                                <div><i class="glping-stats-key glping-stats-s1"></i>Ouverts <span class="glping-stats-num fw-semibold">@bucket.Opened</span></div>
-                                <div><i class="glping-stats-key glping-stats-s2"></i>Résolus <span class="glping-stats-num fw-semibold">@bucket.Solved</span></div>
-                                <div><i class="glping-stats-key glping-stats-s3"></i>Clos <span class="glping-stats-num fw-semibold">@bucket.Closed</span></div>
+                                <div><i class="glping-stats-key glping-stats-s1"></i>@T("Ouverts") <span class="glping-stats-num fw-semibold">@bucket.Opened</span></div>
+                                <div><i class="glping-stats-key glping-stats-s2"></i>@T("Résolus") <span class="glping-stats-num fw-semibold">@bucket.Solved</span></div>
+                                <div><i class="glping-stats-key glping-stats-s3"></i>@T("Clos") <span class="glping-stats-num fw-semibold">@bucket.Closed</span></div>
                             </div>
                         }
                     </div>
@@ -213,28 +213,28 @@
 
         <div class="row row-cards">
             <div class="col-lg-6">
-                <BreakdownTable Title="Par catégorie" DimensionLabel="Catégorie" Rows="_byCategory" />
+                <BreakdownTable Title="@(T("Par catégorie"))" DimensionLabel="@(T("Catégorie"))" Rows="_byCategory" />
             </div>
             <div class="col-lg-6">
-                <BreakdownTable Title="Par technicien" DimensionLabel="Technicien" Rows="_byTechnician" />
+                <BreakdownTable Title="@(T("Par technicien"))" DimensionLabel="@(T("Technicien"))" Rows="_byTechnician" />
             </div>
             <div class="col-lg-6">
-                <BreakdownTable Title="Par priorité" DimensionLabel="Priorité" Rows="_byPriority" />
+                <BreakdownTable Title="@(T("Par priorité"))" DimensionLabel="@(T("Priorité"))" Rows="_byPriority" />
             </div>
             @if (IsTickets)
             {
                 <div class="col-lg-6">
-                    <BreakdownTable Title="Par type" DimensionLabel="Type" Rows="_byType" />
+                    <BreakdownTable Title="@(T("Par type"))" DimensionLabel="@(T("Type"))" Rows="_byType" />
                 </div>
             }
             <div class="col-lg-6">
                 <div class="card glping-stats-breakdown">
                     <div class="card-header">
-                        <h3 class="card-title">En cours aujourd'hui, par statut</h3>
+                        <h3 class="card-title">@T("En cours aujourd'hui, par statut")</h3>
                     </div>
                     @if (_backlogByStatus.Count == 0)
                     {
-                        <div class="card-body text-secondary small">Aucun @ItemsLabel.TrimEnd('s') en cours.</div>
+                        <div class="card-body text-secondary small">@T("Aucun {0} en cours.", ItemsLabel.TrimEnd('s'))</div>
                     }
                     else
                     {
@@ -265,8 +265,7 @@
         </div>
 
         <p class="hint mt-3">
-            Répartitions : ouverts et résolus sur la période, délai moyen de ceux qui y ont été résolus.
-            Seuls les objets de votre périmètre d'entités sont comptés.
+            @T("Répartitions : ouverts et résolus sur la période, délai moyen de ceux qui y ont été résolus. Seuls les objets de votre périmètre d'entités sont comptés.")
         </p>
     }
 </div>

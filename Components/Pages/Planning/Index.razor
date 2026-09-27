@@ -1,17 +1,17 @@
 @page "/assistance/planning"
 @rendermode InteractiveServer
 
-<PageTitle>Planning — GlpiNg</PageTitle>
+<PageTitle>@T("Planning — GlpiNg")</PageTitle>
 
 <div class="card glping-planning">
     <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
         <div class="btn-list align-items-center">
             <div class="btn-group">
-                <button type="button" class="btn btn-icon" title="Semaine précédente" @onclick="PreviousWeekAsync">
+                <button type="button" class="btn btn-icon" title="@(T("Semaine précédente"))" @onclick="PreviousWeekAsync">
                     <i class="ti ti-chevron-left"></i>
                 </button>
-                <button type="button" class="btn" @onclick="TodayAsync">Aujourd'hui</button>
-                <button type="button" class="btn btn-icon" title="Semaine suivante" @onclick="NextWeekAsync">
+                <button type="button" class="btn" @onclick="TodayAsync">@T("Aujourd'hui")</button>
+                <button type="button" class="btn btn-icon" title="@(T("Semaine suivante"))" @onclick="NextWeekAsync">
                     <i class="ti ti-chevron-right"></i>
                 </button>
             </div>
@@ -22,9 +22,9 @@
             <select class="form-select" style="width: auto;" value="@_technicianFilter" @onchange="OnTechnicianChangedAsync">
                 @if (_currentUserId is not null)
                 {
-                    <option value="me">Mon planning</option>
+                    <option value="me">@T("Mon planning")</option>
                 }
-                <option value="all">Tous les techniciens</option>
+                <option value="all">@T("Tous les techniciens")</option>
                 @foreach (var user in _users)
                 {
                     <option value="@user.Id">@user.Name</option>
@@ -34,13 +34,13 @@
             <label class="form-check form-switch align-self-center mb-0">
                 <input class="form-check-input" type="checkbox" checked="@_showDone"
                        @onchange="@((ChangeEventArgs e) => OnShowDoneChangedAsync((bool)(e.Value ?? false)))" />
-                <span class="form-check-label">Tâches terminées</span>
+                <span class="form-check-label">@T("Tâches terminées")</span>
             </label>
 
             <div class="glping-planning-legend">
-                <span><i class="glping-planning-swatch glping-planning-ticket"></i>Ticket</span>
-                <span><i class="glping-planning-swatch glping-planning-problem"></i>Problème</span>
-                <span><i class="glping-planning-swatch glping-planning-change"></i>Changement</span>
+                <span><i class="glping-planning-swatch glping-planning-ticket"></i>@T("Ticket")</span>
+                <span><i class="glping-planning-swatch glping-planning-problem"></i>@T("Problème")</span>
+                <span><i class="glping-planning-swatch glping-planning-change"></i>@T("Changement")</span>
             </div>
         </div>
     </div>
@@ -52,7 +52,7 @@
                 @foreach (DateTime day in Days)
                 {
                     <div class="glping-planning-dayname @(day == Today ? "is-today" : "")">
-                        @day.ToString("ddd d", French)
+                        @day.ToString("ddd d", UiCulture)
                     </div>
                 }
             </div>
@@ -71,7 +71,7 @@
                          style="height: @((_lastHour - _firstHour) * HourHeight)px; background-size: 100% @(HourHeight)px;">
                         @if (NowLineStyle(day) is { } nowStyle)
                         {
-                            <div class="glping-planning-now" style="@nowStyle" title="Maintenant"></div>
+                            <div class="glping-planning-now" style="@nowStyle" title="@(T("Maintenant"))"></div>
                         }
 
                         @foreach (PlannedTask entry in _planned.Where(entry => entry.Day == day))
@@ -86,7 +86,7 @@
                                     @($"{entry.Start:HH:mm}–{entry.End:HH:mm}")
                                     @if (task.State == ItilTaskState.Done)
                                     {
-                                        <i class="ti ti-check ms-1" title="Terminée"></i>
+                                        <i class="ti ti-check ms-1" title="@(T("Terminée"))"></i>
                                     }
                                 </span>
                                 <span class="glping-planning-title">@task.Content</span>
@@ -104,12 +104,12 @@
 
         <aside class="glping-planning-side">
             <div class="glping-planning-side-title">
-                <i class="ti ti-calendar-plus me-1"></i>À planifier
+                <i class="ti ti-calendar-plus me-1"></i>@T("À planifier")
                 <span class="badge bg-secondary-lt ms-1">@_unplanned.Count</span>
             </div>
             @if (_unplanned.Count == 0)
             {
-                <p class="text-secondary small mb-0">Aucune tâche ouverte sans date.</p>
+                <p class="text-secondary small mb-0">@T("Aucune tâche ouverte sans date.")</p>
             }
             else
             {
@@ -125,8 +125,7 @@
                 }
             }
             <p class="hint mt-3 mb-0">
-                Les tâches se créent sur la fiche de leur ticket, problème ou changement ; elles se
-                planifient ici. Sans heure de fin, une tâche occupe une heure.
+                @T("Les tâches se créent sur la fiche de leur ticket, problème ou changement ; elles se planifient ici. Sans heure de fin, une tâche occupe une heure.")
             </p>
         </aside>
     </div>
@@ -136,8 +135,8 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="ti ti-calendar-event me-2"></i>Planifier la tâche</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                <h5 class="modal-title"><i class="ti ti-calendar-event me-2"></i>@T("Planifier la tâche")</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@(T("Fermer"))"></button>
             </div>
             @if (_editing is not null)
             {
@@ -155,15 +154,15 @@
                     </p>
 
                     <div class="glping-fiche-field">
-                        <label>Début</label>
+                        <label>@T("Début")</label>
                         <input class="form-control" type="datetime-local" @bind="_editStart" />
                     </div>
                     <div class="glping-fiche-field">
-                        <label>Fin</label>
+                        <label>@T("Fin")</label>
                         <input class="form-control" type="datetime-local" @bind="_editEnd" />
                     </div>
                     <div class="glping-fiche-field">
-                        <label>Technicien</label>
+                        <label>@T("Technicien")</label>
                         <select class="form-select" @bind="_editUserId">
                             <option value="0">—</option>
                             @foreach (var user in _users)
@@ -175,14 +174,14 @@
                     <label class="form-check mb-0">
                         <input class="form-check-input" type="checkbox" checked="@_editDone"
                                @onchange="@((ChangeEventArgs e) => _editDone = (bool)(e.Value ?? false))" />
-                        <span class="form-check-label">Tâche terminée</span>
+                        <span class="form-check-label">@T("Tâche terminée")</span>
                     </label>
-                    <p class="hint mt-2 mb-0">Vider le début retire la tâche du planning : elle repasse dans « À planifier ».</p>
+                    <p class="hint mt-2 mb-0">@T("Vider le début retire la tâche du planning : elle repasse dans « À planifier ».")</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn" data-bs-dismiss="modal">@T("Annuler")</button>
                     <button type="button" class="btn btn-warning" @onclick="SaveTaskAsync">
-                        <i class="ti ti-device-floppy me-1"></i>Enregistrer
+                        <i class="ti ti-device-floppy me-1"></i>@T("Enregistrer")
                     </button>
                 </div>
             }

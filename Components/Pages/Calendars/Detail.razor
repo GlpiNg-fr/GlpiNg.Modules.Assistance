@@ -1,11 +1,11 @@
 @page "/config/calendars/{CalendarId:int}"
 @rendermode InteractiveServer
 
-<PageTitle>@(_calendar is null ? "Calendrier" : _calendar.Name) — GlpiNg</PageTitle>
+<PageTitle>@(_calendar is null ? T("Calendrier") : _calendar.Name) — GlpiNg</PageTitle>
 
 @if (_calendar is null)
 {
-    <div class="card"><div class="card-body text-center text-secondary py-5">Calendrier introuvable.</div></div>
+    <div class="card"><div class="card-body text-center text-secondary py-5">@T("Calendrier introuvable.")</div></div>
 }
 else
 {
@@ -15,13 +15,13 @@ else
                 <i class="ti ti-calendar-time me-2"></i>@_calendar.Name
                 @if (_calendar.IsEmpty)
                 {
-                    <span class="badge bg-warning-lt ms-2">Aucune plage</span>
+                    <span class="badge bg-warning-lt ms-2">@T("Aucune plage")</span>
                 }
             </h2>
             <div class="btn-list">
-                <a class="btn" href="/config/calendars"><i class="ti ti-arrow-left me-1"></i>Retour à la liste</a>
+                <a class="btn" href="/config/calendars"><i class="ti ti-arrow-left me-1"></i>@T("Retour à la liste")</a>
                 <button type="button" class="btn btn-warning" disabled="@_isSaving" @onclick="SaveAsync">
-                    <i class="ti ti-device-floppy me-1"></i>Enregistrer
+                    <i class="ti ti-device-floppy me-1"></i>@T("Enregistrer")
                 </button>
             </div>
         </div>
@@ -33,7 +33,7 @@ else
                     <button type="button" class="glping-fiche-tab-item @(_activeTab == key ? "active" : "")"
                             @onclick="() => _activeTab = key">
                         <i class="ti @icon"></i>
-                        <span>@label</span>
+                        <span>@T(label)</span>
                         @if (count is { } value)
                         {
                             <span class="glping-fiche-tab-count">@value</span>
@@ -52,21 +52,21 @@ else
                         }
 
                         <div class="glping-fiche-field">
-                            <label>Nom<span class="text-danger ms-1">*</span></label>
+                            <label>@T("Nom")<span class="text-danger ms-1">*</span></label>
                             <input class="form-control" @bind="_calendar.Name" />
                         </div>
                         <div class="glping-fiche-field">
-                            <label>Commentaire</label>
+                            <label>@T("Commentaire")</label>
                             <textarea class="form-control" rows="4" @bind="_calendar.Comment"></textarea>
                         </div>
                         <div class="glping-fiche-field">
-                            <label>Heures par semaine</label>
+                            <label>@T("Heures par semaine")</label>
                             <input class="form-control" disabled value="@WeeklyHours()" />
                         </div>
                         @if (_usedBy.Count > 0)
                         {
                             <div class="glping-fiche-field">
-                                <label>Utilisé par</label>
+                                <label>@T("Utilisé par")</label>
                                 <div>
                                     @foreach (ServiceLevel level in _usedBy)
                                     {
@@ -80,15 +80,14 @@ else
 
                     case "plages":
                         <p class="text-secondary">
-                            Les heures travaillées, jour par jour. Plusieurs plages sur un même jour
-                            sont permises : c'est ainsi qu'on ferme entre midi et deux.
+                            @T("Les heures travaillées, jour par jour. Plusieurs plages sur un même jour sont permises : c'est ainsi qu'on ferme entre midi et deux.")
                         </p>
 
                         <div class="card mb-3">
                             <div class="card-body">
                                 <div class="row g-2 align-items-end">
                                     <div class="col-md-4">
-                                        <label class="form-label">Jour</label>
+                                        <label class="form-label">@T("Jour")</label>
                                         <select class="form-select" @bind="_newSegmentDay">
                                             @foreach (DayOfWeek day in WeekOrder)
                                             {
@@ -97,16 +96,16 @@ else
                                         </select>
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label">Début</label>
+                                        <label class="form-label">@T("Début")</label>
                                         <input class="form-control" type="time" @bind="_newSegmentStart" />
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label">Fin</label>
+                                        <label class="form-label">@T("Fin")</label>
                                         <input class="form-control" type="time" @bind="_newSegmentEnd" />
                                     </div>
                                     <div class="col-md-2">
                                         <button type="button" class="btn btn-primary w-100" @onclick="AddSegmentAsync">
-                                            <i class="ti ti-plus me-1"></i>Ajouter
+                                            <i class="ti ti-plus me-1"></i>@T("Ajouter")
                                         </button>
                                     </div>
                                 </div>
@@ -121,7 +120,7 @@ else
                         {
                             <div class="glping-config-placeholder">
                                 <i class="ti ti-calendar-off"></i>
-                                <p class="mb-0">Aucune plage : ce calendrier n'ouvre jamais.</p>
+                                <p class="mb-0">@T("Aucune plage : ce calendrier n'ouvre jamais.")</p>
                             </div>
                         }
                         else
@@ -130,10 +129,10 @@ else
                                 <table class="table table-vcenter">
                                     <thead>
                                         <tr>
-                                            <th>Jour</th>
-                                            <th>Début</th>
-                                            <th>Fin</th>
-                                            <th>Durée</th>
+                                            <th>@T("Jour")</th>
+                                            <th>@T("Début")</th>
+                                            <th>@T("Fin")</th>
+                                            <th>@T("Durée")</th>
                                             <th style="width: 3rem;"></th>
                                         </tr>
                                     </thead>
@@ -146,7 +145,7 @@ else
                                                 <td class="text-secondary">@segment.EndTime.ToString("HH\\:mm")</td>
                                                 <td class="text-secondary">@($"{segment.Duration.TotalHours:0.#} h")</td>
                                                 <td>
-                                                    <button type="button" class="btn btn-icon btn-sm text-danger" title="Supprimer"
+                                                    <button type="button" class="btn btn-icon btn-sm text-danger" title="@(T("Supprimer"))"
                                                             @onclick="() => DeleteSegmentAsync(segment.Id)">
                                                         <i class="ti ti-trash"></i>
                                                     </button>
@@ -161,30 +160,29 @@ else
 
                     case "fermetures":
                         <p class="text-secondary">
-                            Jours fériés, ponts et fermetures annuelles. Pendant ces jours, le
-                            compteur d'un niveau de service ne tourne pas.
+                            @T("Jours fériés, ponts et fermetures annuelles. Pendant ces jours, le compteur d'un niveau de service ne tourne pas.")
                         </p>
 
                         <div class="card mb-3">
                             <div class="card-body">
                                 <div class="row g-2 align-items-end">
                                     <div class="col-md-4">
-                                        <label class="form-label">Intitulé</label>
+                                        <label class="form-label">@T("Intitulé")</label>
                                         <input class="form-control" @bind="_newHolidayName" @bind:event="oninput" />
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label">Du</label>
+                                        <label class="form-label">@T("Du")</label>
                                         <input class="form-control" type="date" @bind="_newHolidayStart" />
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label">Au (inclus)</label>
+                                        <label class="form-label">@T("Au (inclus)")</label>
                                         <input class="form-control" type="date" @bind="_newHolidayEnd" />
                                     </div>
                                     <div class="col-md-2">
                                         <button type="button" class="btn btn-primary w-100"
                                                 disabled="@string.IsNullOrWhiteSpace(_newHolidayName)"
                                                 @onclick="AddHolidayAsync">
-                                            <i class="ti ti-plus me-1"></i>Ajouter
+                                            <i class="ti ti-plus me-1"></i>@T("Ajouter")
                                         </button>
                                     </div>
                                 </div>
@@ -192,7 +190,7 @@ else
                                     <input class="form-check-input" type="checkbox" checked="@_newHolidayPerpetual"
                                            @onchange="@((ChangeEventArgs e) => _newHolidayPerpetual = (bool)(e.Value ?? false))" />
                                     <span class="form-check-label">
-                                        Revient chaque année à la même date (1<sup>er</sup> mai, 14 juillet...)
+                                        Revient chaque année à la même date (1<sup>er</sup> @T("mai, 14 juillet...)")
                                     </span>
                                 </label>
                                 @if (_holidayError is not null)
@@ -206,7 +204,7 @@ else
                         {
                             <div class="glping-config-placeholder">
                                 <i class="ti ti-beach"></i>
-                                <p class="mb-0">Aucune fermeture.</p>
+                                <p class="mb-0">@T("Aucune fermeture.")</p>
                             </div>
                         }
                         else
@@ -215,10 +213,10 @@ else
                                 <table class="table table-vcenter">
                                     <thead>
                                         <tr>
-                                            <th>Intitulé</th>
-                                            <th>Du</th>
-                                            <th>Au</th>
-                                            <th>Récurrence</th>
+                                            <th>@T("Intitulé")</th>
+                                            <th>@T("Du")</th>
+                                            <th>@T("Au")</th>
+                                            <th>@T("Récurrence")</th>
                                             <th style="width: 3rem;"></th>
                                         </tr>
                                     </thead>
@@ -232,15 +230,15 @@ else
                                                 <td>
                                                     @if (holiday.IsPerpetual)
                                                     {
-                                                        <span class="badge bg-blue-lt">Chaque année</span>
+                                                        <span class="badge bg-blue-lt">@T("Chaque année")</span>
                                                     }
                                                     else
                                                     {
-                                                        <span class="text-secondary">Une seule fois</span>
+                                                        <span class="text-secondary">@T("Une seule fois")</span>
                                                     }
                                                 </td>
                                                 <td>
-                                                    <button type="button" class="btn btn-icon btn-sm text-danger" title="Supprimer"
+                                                    <button type="button" class="btn btn-icon btn-sm text-danger" title="@(T("Supprimer"))"
                                                             @onclick="() => DeleteHolidayAsync(holiday.Id)">
                                                         <i class="ti ti-trash"></i>
                                                     </button>
@@ -255,21 +253,20 @@ else
 
                     case "essai":
                         <p class="text-secondary">
-                            Vérifier ce que le calendrier produit, avant qu'un ticket réel en
-                            dépende : à quelle date tombe une durée ouvrée partant d'un instant donné.
+                            @T("Vérifier ce que le calendrier produit, avant qu'un ticket réel en dépende : à quelle date tombe une durée ouvrée partant d'un instant donné.")
                         </p>
 
                         <div class="row g-2 align-items-end mb-3">
                             <div class="col-md-4">
-                                <label class="form-label">Départ</label>
+                                <label class="form-label">@T("Départ")</label>
                                 <input class="form-control" type="datetime-local" @bind="_probeStart" />
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label">Durée</label>
+                                <label class="form-label">@T("Durée")</label>
                                 <input class="form-control" type="number" min="1" @bind="_probeValue" />
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label">Unité</label>
+                                <label class="form-label">@T("Unité")</label>
                                 <select class="form-select" @bind="_probeUnit">
                                     @foreach (ServiceLevelUnit unit in Enum.GetValues<ServiceLevelUnit>())
                                     {
@@ -279,7 +276,7 @@ else
                             </div>
                             <div class="col-md-2">
                                 <button type="button" class="btn btn-primary w-100" @onclick="Probe">
-                                    <i class="ti ti-player-play me-1"></i>Calculer
+                                    <i class="ti ti-player-play me-1"></i>@T("Calculer")
                                 </button>
                             </div>
                         </div>

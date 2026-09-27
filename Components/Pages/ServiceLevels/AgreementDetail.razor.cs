@@ -3,6 +3,7 @@ using GlpiNg.Modules.Abstractions.Directory;
 using GlpiNg.Modules.Assistance.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
+using GlpiNg.Modules.Abstractions.Localization;
 
 namespace GlpiNg.Modules.Assistance.Components.Pages.ServiceLevels;
 
@@ -121,7 +122,7 @@ public partial class AgreementDetail : ComponentBase
         EscalationActionType.AssignGroup when int.TryParse(action.Value, out int id) =>
             _groups.FirstOrDefault(group => group.Id == id)?.Name ?? $"#{id} (supprimé)",
 
-        EscalationActionType.Notify => "Événement « Escalade d'un ticket »",
+        EscalationActionType.Notify => Tr.T("Événement « Escalade d'un ticket »"),
 
         _ => action.Value ?? "—",
     };
@@ -135,14 +136,14 @@ public partial class AgreementDetail : ComponentBase
 
         if (string.IsNullOrWhiteSpace(_agreement.Name))
         {
-            _error = "Le nom est obligatoire.";
+            _error = Tr.T("Le nom est obligatoire.");
             _activeTab = "fiche";
             return;
         }
 
         if (_agreement.DurationValue <= 0)
         {
-            _error = "La durée doit être d'au moins une unité.";
+            _error = Tr.T("La durée doit être d'au moins une unité.");
             _activeTab = "fiche";
             return;
         }
@@ -173,8 +174,8 @@ public partial class AgreementDetail : ComponentBase
 
             ToastService.Notify(new ToastMessage(ToastType.Success,
                 _ticketCount > 0
-                    ? $"Engagement enregistré. Les {_ticketCount} ticket(s) déjà engagés gardent leur échéance."
-                    : "Engagement enregistré."));
+                    ? Tr.T("Engagement enregistré. Les {0} ticket(s) déjà engagés gardent leur échéance.", _ticketCount)
+                    : Tr.T("Engagement enregistré.")));
 
             await LoadAsync();
         }
@@ -259,7 +260,7 @@ public partial class AgreementDetail : ComponentBase
         // niveau qui se déclenche et ne fait rien.
         if (type != EscalationActionType.Notify && string.IsNullOrWhiteSpace(value))
         {
-            _escalationError = $"L'action « {ServiceLevelLabels.For(type)} » a besoin d'une valeur.";
+            _escalationError = Tr.T("L'action « {0} » a besoin d'une valeur.", ServiceLevelLabels.For(type));
             return;
         }
 

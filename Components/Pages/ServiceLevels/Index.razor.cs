@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
+using GlpiNg.Modules.Abstractions.Localization;
 
 namespace GlpiNg.Modules.Assistance.Components.Pages.ServiceLevels;
 
@@ -152,7 +153,7 @@ public partial class Index : ComponentBase
     {
         if (_ticketCounts.GetValueOrDefault(levelId) > 0)
         {
-            _error = "Niveau de service non supprimé : des tickets portent encore ses engagements. "
+            _error = Tr.T("Niveau de service non supprimé : des tickets portent encore ses engagements. ")
                 + "Retirez-les de ces tickets d'abord.";
 
             return;

@@ -1,7 +1,7 @@
 @page "/config/calendars"
 @rendermode InteractiveServer
 
-<PageTitle>Calendriers — GlpiNg</PageTitle>
+<PageTitle>@T("Calendriers — GlpiNg")</PageTitle>
 
 <div class="glping-list-page">
 <div class="card">
@@ -9,12 +9,12 @@
         <div class="btn-list align-items-center">
             <div class="dropdown">
                 <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="ti ti-search me-1"></i>Rechercher
+                    <i class="ti ti-search me-1"></i>@T("Rechercher")
                 </button>
                 <div class="dropdown-menu p-3" style="min-width: 280px;">
                     <div class="input-icon">
                         <span class="input-icon-addon"><i class="ti ti-search"></i></span>
-                        <input type="text" class="form-control" placeholder="Nom, commentaire..."
+                        <input type="text" class="form-control" placeholder="@(T("Nom, commentaire..."))"
                                @bind="_searchTerm" @bind:event="oninput" @onkeyup="OnSearchChanged" />
                     </div>
                 </div>
@@ -22,12 +22,12 @@
         </div>
 
         <div class="btn-list align-items-center">
-            <button type="button" class="btn btn-icon" @onclick="LoadAsync" title="Rafraîchir">
+            <button type="button" class="btn btn-icon" @onclick="LoadAsync" title="@(T("Rafraîchir"))">
                 <i class="ti ti-refresh"></i>
             </button>
 
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newCalendarModal">
-                <i class="ti ti-plus me-1"></i>Ajouter
+                <i class="ti ti-plus me-1"></i>@T("Ajouter")
             </button>
         </div>
     </div>
@@ -36,9 +36,7 @@
        tableau vers le bas de l'écran. *@
     <div class="card-body border-bottom py-3 flex-grow-0">
         <p class="text-secondary mb-0">
-            Les heures pendant lesquelles le service travaille. Un niveau de service s'appuie
-            dessus : « 4 heures » sur un incident ouvert vendredi à 17 h veut alors dire lundi
-            matin, et non samedi soir.
+            @T("Les heures pendant lesquelles le service travaille. Un niveau de service s'appuie dessus : « 4 heures » sur un incident ouvert vendredi à 17 h veut alors dire lundi matin, et non samedi soir.")
         </p>
     </div>
 
@@ -51,18 +49,18 @@
         <table class="table table-vcenter card-table">
             <thead>
                 <tr>
-                    <th>Nom</th>
-                    <th>Plages</th>
-                    <th>Heures par semaine</th>
-                    <th>Fermetures</th>
-                    <th>Commentaire</th>
+                    <th>@T("Nom")</th>
+                    <th>@T("Plages")</th>
+                    <th>@T("Heures par semaine")</th>
+                    <th>@T("Fermetures")</th>
+                    <th>@T("Commentaire")</th>
                     <th style="width: 6rem;"></th>
                 </tr>
             </thead>
             <tbody>
                 @if (_filtered.Count == 0)
                 {
-                    <tr><td colspan="6" class="text-center text-secondary py-4">Aucun calendrier.</td></tr>
+                    <tr><td colspan="6" class="text-center text-secondary py-4">@T("Aucun calendrier.")</td></tr>
                 }
                 else
                 {
@@ -79,7 +77,7 @@
                                 {
                                     @* Un calendrier vide n'ouvre jamais : une échéance calculée
                                        dessus n'arriverait pas. Le dire ici, pas à l'usage. *@
-                                    <span class="badge bg-warning-lt">Aucune plage</span>
+                                    <span class="badge bg-warning-lt">@T("Aucune plage")</span>
                                 }
                                 else
                                 {
@@ -90,20 +88,20 @@
                             <td class="text-secondary">@calendar.Holidays.Count</td>
                             <td class="text-secondary">@calendar.Comment</td>
                             <td class="text-nowrap">
-                                <a class="btn btn-icon btn-sm" title="Ouvrir" href="@($"/config/calendars/{calendar.Id}")">
+                                <a class="btn btn-icon btn-sm" title="@(T("Ouvrir"))" href="@($"/config/calendars/{calendar.Id}")">
                                     <i class="ti ti-pencil"></i>
                                 </a>
                                 <div class="dropdown d-inline-block">
                                     <button type="button" class="btn btn-icon btn-sm text-danger"
-                                            data-bs-toggle="dropdown" aria-expanded="false" title="Supprimer">
+                                            data-bs-toggle="dropdown" aria-expanded="false" title="@(T("Supprimer"))">
                                         <i class="ti ti-trash"></i>
                                     </button>
                                     <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 280px;">
-                                        <p class="mb-2">Supprimer ce calendrier, ses plages et ses fermetures ?</p>
+                                        <p class="mb-2">@T("Supprimer ce calendrier, ses plages et ses fermetures ?")</p>
                                         <div class="d-flex justify-content-end gap-2">
-                                            <button type="button" class="btn btn-sm">Annuler</button>
+                                            <button type="button" class="btn btn-sm">@T("Annuler")</button>
                                             <button type="button" class="btn btn-sm btn-danger"
-                                                    @onclick="() => DeleteAsync(calendar.Id)">Supprimer</button>
+                                                    @onclick="() => DeleteAsync(calendar.Id)">@T("Supprimer")</button>
                                         </div>
                                     </div>
                                 </div>
@@ -121,32 +119,31 @@
     <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="ti ti-calendar-time me-2"></i>Nouvel élément - Calendrier</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                <h5 class="modal-title"><i class="ti ti-calendar-time me-2"></i>@T("Nouvel élément - Calendrier")</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@(T("Fermer"))"></button>
             </div>
             <div class="modal-body">
                 <div class="glping-fiche-field">
-                    <label>Nom<span class="text-danger ms-1" title="Champ obligatoire">*</span></label>
+                    <label>@T("Nom")<span class="text-danger ms-1" title="@(T("Champ obligatoire"))">*</span></label>
                     <input class="form-control" @bind="_newCalendar.Name" @bind:event="oninput" />
                 </div>
                 <div class="glping-fiche-field">
-                    <label>Commentaire</label>
+                    <label>@T("Commentaire")</label>
                     <textarea class="form-control" rows="3" @bind="_newCalendar.Comment"></textarea>
                 </div>
                 <label class="form-check">
                     <input class="form-check-input" type="checkbox" checked="@_seedStandardWeek"
                            @onchange="@((ChangeEventArgs e) => _seedStandardWeek = (bool)(e.Value ?? false))" />
-                    <span class="form-check-label">Pré-remplir une semaine ouvrée (lundi-vendredi, 9 h - 18 h)</span>
+                    <span class="form-check-label">@T("Pré-remplir une semaine ouvrée (lundi-vendredi, 9 h - 18 h)")</span>
                 </label>
                 <p class="hint">
-                    Un calendrier sans plage n'ouvre jamais : autant partir d'une semaine plausible,
-                    quitte à la corriger sur la fiche.
+                    @T("Un calendrier sans plage n'ouvre jamais : autant partir d'une semaine plausible, quitte à la corriger sur la fiche.")
                 </p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-warning" disabled="@string.IsNullOrWhiteSpace(_newCalendar.Name)"
                         @onclick="CreateAsync">
-                    <i class="ti ti-plus me-1"></i>Ajouter
+                    <i class="ti ti-plus me-1"></i>@T("Ajouter")
                 </button>
             </div>
         </div>

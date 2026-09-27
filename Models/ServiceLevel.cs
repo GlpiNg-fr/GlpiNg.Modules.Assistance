@@ -1,4 +1,5 @@
 using GlpiNg.Modules.Abstractions.Entities;
+using GlpiNg.Modules.Abstractions.Localization;
 
 namespace GlpiNg.Modules.Assistance.Models;
 
@@ -174,14 +175,14 @@ public class ServiceLevelEscalation
     /// <summary>« 1 h avant l'échéance », « à l'échéance », « 2 h après » — pour l'affichage.</summary>
     public string OffsetLabel => OffsetMinutes switch
     {
-        0 => "à l'échéance",
-        < 0 => $"{Humanise(-OffsetMinutes)} avant l'échéance",
-        _ => $"{Humanise(OffsetMinutes)} après l'échéance",
+        0 => Tr.T("à l'échéance"),
+        < 0 => Tr.T("{0} avant l'échéance", Humanise(-OffsetMinutes)),
+        _ => Tr.T("{0} après l'échéance", Humanise(OffsetMinutes)),
     };
 
     private static string Humanise(int minutes) => minutes switch
     {
-        < 60 => $"{minutes} min",
+        < 60 => Tr.T("{0} min", minutes),
         _ when minutes % 60 == 0 => $"{minutes / 60} h",
         _ => $"{minutes / 60} h {minutes % 60:00}",
     };
@@ -229,41 +230,41 @@ public static class ServiceLevelLabels
 {
     public static string For(ServiceLevelKind kind) => kind switch
     {
-        ServiceLevelKind.Sla => "SLA (envers le demandeur)",
-        ServiceLevelKind.Ola => "OLA (interne)",
+        ServiceLevelKind.Sla => Tr.T("SLA (envers le demandeur)"),
+        ServiceLevelKind.Ola => Tr.T("OLA (interne)"),
         _ => kind.ToString(),
     };
 
     public static string ShortFor(ServiceLevelKind kind) => kind switch
     {
-        ServiceLevelKind.Sla => "SLA",
-        ServiceLevelKind.Ola => "OLA",
+        ServiceLevelKind.Sla => Tr.T("SLA"),
+        ServiceLevelKind.Ola => Tr.T("OLA"),
         _ => kind.ToString(),
     };
 
     public static string For(ServiceLevelTarget target) => target switch
     {
-        ServiceLevelTarget.TimeToOwn => "Prise en charge",
-        ServiceLevelTarget.TimeToResolve => "Résolution",
+        ServiceLevelTarget.TimeToOwn => Tr.T("Prise en charge"),
+        ServiceLevelTarget.TimeToResolve => Tr.T("Résolution"),
         _ => target.ToString(),
     };
 
     public static string For(ServiceLevelUnit unit) => unit switch
     {
-        ServiceLevelUnit.Minute => "minute(s)",
-        ServiceLevelUnit.Hour => "heure(s)",
-        ServiceLevelUnit.Day => "jour(s)",
+        ServiceLevelUnit.Minute => Tr.T("minute(s)"),
+        ServiceLevelUnit.Hour => Tr.T("heure(s)"),
+        ServiceLevelUnit.Day => Tr.T("jour(s)"),
         _ => unit.ToString(),
     };
 
     public static string For(EscalationActionType action) => action switch
     {
-        EscalationActionType.SetPriority => "Changer la priorité",
-        EscalationActionType.SetStatus => "Changer le statut",
-        EscalationActionType.AssignUser => "Attribuer à un technicien",
-        EscalationActionType.AssignGroup => "Attribuer à un groupe",
-        EscalationActionType.AddFollowup => "Ajouter un suivi interne",
-        EscalationActionType.Notify => "Notifier",
+        EscalationActionType.SetPriority => Tr.T("Changer la priorité"),
+        EscalationActionType.SetStatus => Tr.T("Changer le statut"),
+        EscalationActionType.AssignUser => Tr.T("Attribuer à un technicien"),
+        EscalationActionType.AssignGroup => Tr.T("Attribuer à un groupe"),
+        EscalationActionType.AddFollowup => Tr.T("Ajouter un suivi interne"),
+        EscalationActionType.Notify => Tr.T("Notifier"),
         _ => action.ToString(),
     };
 

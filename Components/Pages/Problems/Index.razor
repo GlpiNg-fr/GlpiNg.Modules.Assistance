@@ -1,7 +1,7 @@
 @page "/assistance/problems"
 @rendermode InteractiveServer
 
-<PageTitle>Problèmes — GlpiNg</PageTitle>
+<PageTitle>@T("Problèmes — GlpiNg")</PageTitle>
 
 <div class="glping-list-page">
 <div class="card">
@@ -9,20 +9,20 @@
         <div class="btn-list align-items-center">
             <div class="dropdown">
                 <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="ti ti-search me-1"></i>Rechercher
+                    <i class="ti ti-search me-1"></i>@T("Rechercher")
                 </button>
                 <div class="dropdown-menu p-3" style="min-width: 280px;">
                     <div class="input-icon">
                         <span class="input-icon-addon"><i class="ti ti-search"></i></span>
-                        <input type="text" class="form-control" placeholder="Titre, énoncé, cause..."
+                        <input type="text" class="form-control" placeholder="@(T("Titre, énoncé, cause..."))"
                                @bind="_searchTerm" @bind:event="oninput" @onkeyup="OnSearchChanged" />
                     </div>
                 </div>
             </div>
 
             <select class="form-select" style="width: auto;" @bind="_statusFilter" @bind:after="ApplyFilter">
-                <option value="open">Problèmes ouverts</option>
-                <option value="all">Tous les statuts</option>
+                <option value="open">@T("Problèmes ouverts")</option>
+                <option value="all">@T("Tous les statuts")</option>
                 @foreach (ProblemStatus status in ProblemLabels.Lifecycle)
                 {
                     <option value="@((int)status)">@ProblemLabels.For(status)</option>
@@ -32,7 +32,7 @@
             <label class="form-check form-switch align-self-center mb-0">
                 <input class="form-check-input" type="checkbox" checked="@_mineOnly"
                        @onchange="@((ChangeEventArgs e) => OnMineOnlyChanged((bool)(e.Value ?? false)))" />
-                <span class="form-check-label">Qui me sont attribués</span>
+                <span class="form-check-label">@T("Qui me sont attribués")</span>
             </label>
 
             @* Un problème sans incident rattaché n'est pas encore relié à ce qu'il explique :
@@ -40,34 +40,33 @@
             <label class="form-check form-switch align-self-center mb-0">
                 <input class="form-check-input" type="checkbox" checked="@_unlinkedOnly"
                        @onchange="@((ChangeEventArgs e) => OnUnlinkedOnlyChanged((bool)(e.Value ?? false)))" />
-                <span class="form-check-label">Sans incident rattaché</span>
+                <span class="form-check-label">@T("Sans incident rattaché")</span>
             </label>
         </div>
 
         <div class="btn-list align-items-center">
             <div class="dropdown">
                 <button type="button" class="btn btn-icon text-danger" data-bs-toggle="dropdown" aria-expanded="false"
-                        disabled="@(_selectedIds.Count == 0)" title="Supprimer la sélection">
+                        disabled="@(_selectedIds.Count == 0)" title="@(T("Supprimer la sélection"))">
                     <i class="ti ti-trash"></i>
                 </button>
                 <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 300px;">
                     <p class="mb-2">
-                        Supprimer @_selectedIds.Count problème(s), leurs suivis et leurs tâches ?
-                        Les incidents rattachés ne sont pas supprimés, seulement détachés.
+                        @T("Supprimer {0} problème(s), leurs suivis et leurs tâches ? Les incidents rattachés ne sont pas supprimés, seulement détachés.", _selectedIds.Count)
                     </p>
                     <div class="d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-sm">Annuler</button>
-                        <button type="button" class="btn btn-sm btn-danger" @onclick="DeleteSelectedAsync">Supprimer</button>
+                        <button type="button" class="btn btn-sm">@T("Annuler")</button>
+                        <button type="button" class="btn btn-sm btn-danger" @onclick="DeleteSelectedAsync">@T("Supprimer")</button>
                     </div>
                 </div>
             </div>
 
-            <button type="button" class="btn btn-icon" @onclick="LoadAsync" title="Rafraîchir">
+            <button type="button" class="btn btn-icon" @onclick="LoadAsync" title="@(T("Rafraîchir"))">
                 <i class="ti ti-refresh"></i>
             </button>
 
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newProblemModal">
-                <i class="ti ti-plus me-1"></i>Ajouter
+                <i class="ti ti-plus me-1"></i>@T("Ajouter")
             </button>
         </div>
     </div>
@@ -77,25 +76,25 @@
             <thead>
                 <tr>
                     <th style="width: 2.5rem;">
-                        <input class="form-check-input m-0" type="checkbox" title="Sélectionner les éléments visibles"
+                        <input class="form-check-input m-0" type="checkbox" title="@(T("Sélectionner les éléments visibles"))"
                                checked="@AllSelected"
                                @onchange="@((ChangeEventArgs e) => ToggleSelectAll((bool)(e.Value ?? false)))" />
                     </th>
                     <th style="width: 5rem;">N°</th>
-                    <th>Titre</th>
-                    <th>Statut</th>
-                    <th>Priorité</th>
-                    <th>Catégorie</th>
-                    <th>Attribué à</th>
-                    <th>Incidents</th>
-                    <th>Ouvert le</th>
-                    <th>Échéance</th>
+                    <th>@T("Titre")</th>
+                    <th>@T("Statut")</th>
+                    <th>@T("Priorité")</th>
+                    <th>@T("Catégorie")</th>
+                    <th>@T("Attribué à")</th>
+                    <th>@T("Incidents")</th>
+                    <th>@T("Ouvert le")</th>
+                    <th>@T("Échéance")</th>
                 </tr>
             </thead>
             <tbody>
                 @if (_filtered.Count == 0)
                 {
-                    <tr><td colspan="10" class="text-center text-secondary py-4">Aucun problème.</td></tr>
+                    <tr><td colspan="10" class="text-center text-secondary py-4">@T("Aucun problème.")</td></tr>
                 }
                 else
                 {
@@ -146,22 +145,22 @@
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="ti ti-bulb me-2"></i>Nouvel élément - Problème</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                <h5 class="modal-title"><i class="ti ti-bulb me-2"></i>@T("Nouvel élément - Problème")</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@(T("Fermer"))"></button>
             </div>
             <div class="modal-body">
                 <div class="glping-fiche-field">
-                    <label>Titre<span class="text-danger ms-1" title="Champ obligatoire">*</span></label>
+                    <label>@T("Titre")<span class="text-danger ms-1" title="@(T("Champ obligatoire"))">*</span></label>
                     <input class="form-control" @bind="_newProblem.Name" @bind:event="oninput" />
                 </div>
                 <div class="glping-fiche-field">
-                    <label>Énoncé</label>
+                    <label>@T("Énoncé")</label>
                     <textarea class="form-control" rows="4" @bind="_newProblem.Content"></textarea>
                 </div>
                 <div class="row">
                     <div class="col-md-6">
                         <div class="glping-fiche-field">
-                            <label>Urgence</label>
+                            <label>@T("Urgence")</label>
                             <select class="form-select" value="@((int)_newProblem.Urgency)"
                                     @onchange="@(e => _newProblem.Urgency = (ItilLevel)int.Parse(e.Value?.ToString() ?? "3"))">
                                 @foreach (ItilLevel level in Enum.GetValues<ItilLevel>())
@@ -173,7 +172,7 @@
                     </div>
                     <div class="col-md-6">
                         <div class="glping-fiche-field">
-                            <label>Catégorie</label>
+                            <label>@T("Catégorie")</label>
                             <select class="form-select" @bind="_newCategoryId">
                                 <option value="0">—</option>
                                 @foreach (TicketCategory category in _categories)
@@ -185,14 +184,13 @@
                     </div>
                 </div>
                 <p class="hint">
-                    Analyse, contournement, incidents rattachés et attribution se renseignent sur la
-                    fiche. La priorité se calcule à partir de l'urgence et de l'impact.
+                    @T("Analyse, contournement, incidents rattachés et attribution se renseignent sur la fiche. La priorité se calcule à partir de l'urgence et de l'impact.")
                 </p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-warning" disabled="@string.IsNullOrWhiteSpace(_newProblem.Name)"
                         @onclick="CreateAsync">
-                    <i class="ti ti-plus me-1"></i>Ajouter
+                    <i class="ti ti-plus me-1"></i>@T("Ajouter")
                 </button>
             </div>
         </div>

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
+using GlpiNg.Modules.Abstractions.Localization;
 
 namespace GlpiNg.Modules.Assistance.Components.Pages.Planning;
 
@@ -43,7 +44,8 @@ public partial class Index : ComponentBase
     /// <summary>Durée supposée d'une tâche planifiée sans fin : GLPI la dessine sur une heure aussi.</summary>
     private static readonly TimeSpan DefaultDuration = TimeSpan.FromHours(1);
 
-    private static readonly CultureInfo French = CultureInfo.GetCultureInfo("fr-FR");
+    // Noms de jours et de mois dans la langue de l'interface (voir Tr), pas dans celle du serveur.
+    private static CultureInfo UiCulture => CultureInfo.CurrentUICulture;
 
     /// <summary>Posée à l'initialisation, une fois le fuseau de l'utilisateur connu (voir <see cref="Today"/>).</summary>
     private DateTime _weekStart;
@@ -89,10 +91,10 @@ public partial class Index : ComponentBase
 
             // « du 21 au 27 septembre », mais « du 28 septembre au 4 octobre » à cheval sur deux mois.
             string from = _weekStart.Month == end.Month
-                ? _weekStart.Day.ToString(French)
-                : _weekStart.ToString("d MMMM", French);
+                ? _weekStart.Day.ToString(UiCulture)
+                : _weekStart.ToString("d MMMM", UiCulture);
 
-            return $"Semaine du {from} au {end.ToString("d MMMM yyyy", French)}";
+            return Tr.T("Semaine du {0} au {1}", from, end.ToString("d MMMM yyyy", UiCulture));
         }
     }
 
@@ -279,9 +281,9 @@ public partial class Index : ComponentBase
 
     private static string TypeLabel(string itemType) => itemType switch
     {
-        ItemTypes.Ticket => "Ticket",
-        ItemTypes.Problem => "Problème",
-        ItemTypes.Change => "Changement",
+        ItemTypes.Ticket => Tr.T("Ticket"),
+        ItemTypes.Problem => Tr.T("Problème"),
+        ItemTypes.Change => Tr.T("Changement"),
         _ => itemType,
     };
 
@@ -311,7 +313,7 @@ public partial class Index : ComponentBase
 
     private string NameOfUser(int? id) => id is { } value
         ? _users.FirstOrDefault(user => user.Id == value)?.Name ?? $"#{value} (supprimé)"
-        : "Non attribuée";
+        : Tr.T("Non attribuée");
 
     /// <summary>
     /// Place les tâches d'un même jour qui se chevauchent côte à côte : chaque groupe de tâches qui
@@ -454,13 +456,13 @@ public partial class Index : ComponentBase
 
         if (_editStart is null && _editEnd is not null)
         {
-            _editError = "Une fin sans début ne se place pas dans le planning.";
+            _editError = Tr.T("Une fin sans début ne se place pas dans le planning.");
             return;
         }
 
         if (_editStart is { } start && _editEnd is { } end && end <= start)
         {
-            _editError = "La fin doit être postérieure au début.";
+            _editError = Tr.T("La fin doit être postérieure au début.");
             return;
         }
 
@@ -469,7 +471,7 @@ public partial class Index : ComponentBase
         ItilTask? stored = await db.Set<ItilTask>().FirstOrDefaultAsync(task => task.Id == _editing.Id);
         if (stored is null)
         {
-            _editError = "Cette tâche n'existe plus.";
+            _editError = Tr.T("Cette tâche n'existe plus.");
             return;
         }
 
@@ -520,10 +522,10 @@ public partial class Index : ComponentBase
 
     private static string Describe(DateTime? start, DateTime? end) => start switch
     {
-        null => "(non planifiée)",
-        { } from when end is { } to && to.Date == from.Date => $"le {from:dd/MM/yyyy HH:mm}–{to:HH:mm}",
-        { } from when end is { } to => $"du {from:dd/MM/yyyy HH:mm} au {to:dd/MM/yyyy HH:mm}",
-        { } from => $"le {from:dd/MM/yyyy HH:mm}",
+        null => Tr.T("(non planifiée)"),
+        { } from when end is { } to && to.Date == from.Date => Tr.T("le {0:dd/MM/yyyy HH:mm}–{1:HH:mm}", from, to),
+        { } from when end is { } to => Tr.T("du {0:dd/MM/yyyy HH:mm} au {1:dd/MM/yyyy HH:mm}", from, to),
+        { } from => Tr.T("le {0:dd/MM/yyyy HH:mm}", from),
     };
 
     /// <summary>Une tâche placée dans la grille : son jour, sa portion visible ce jour-là, et son couloir.</summary>

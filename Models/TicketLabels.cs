@@ -1,3 +1,4 @@
+using GlpiNg.Modules.Abstractions.Localization;
 namespace GlpiNg.Modules.Assistance.Models;
 
 /// <summary>
@@ -9,19 +10,19 @@ public static class TicketLabels
 {
     public static string For(TicketType type) => type switch
     {
-        TicketType.Incident => "Incident",
-        TicketType.Request => "Demande",
+        TicketType.Incident => Tr.T("Incident"),
+        TicketType.Request => Tr.T("Demande"),
         _ => type.ToString(),
     };
 
     public static string For(TicketStatus status) => status switch
     {
-        TicketStatus.New => "Nouveau",
-        TicketStatus.Assigned => "En cours (attribué)",
-        TicketStatus.Planned => "En cours (planifié)",
-        TicketStatus.Waiting => "En attente",
-        TicketStatus.Solved => "Résolu",
-        TicketStatus.Closed => "Clos",
+        TicketStatus.New => Tr.T("Nouveau"),
+        TicketStatus.Assigned => Tr.T("En cours (attribué)"),
+        TicketStatus.Planned => Tr.T("En cours (planifié)"),
+        TicketStatus.Waiting => Tr.T("En attente"),
+        TicketStatus.Solved => Tr.T("Résolu"),
+        TicketStatus.Closed => Tr.T("Clos"),
         _ => status.ToString(),
     };
 

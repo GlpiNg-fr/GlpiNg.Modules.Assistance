@@ -1,7 +1,7 @@
 @page "/assistance/changes"
 @rendermode InteractiveServer
 
-<PageTitle>Changements — GlpiNg</PageTitle>
+<PageTitle>@T("Changements — GlpiNg")</PageTitle>
 
 <div class="glping-list-page">
 <div class="card">
@@ -9,20 +9,20 @@
         <div class="btn-list align-items-center">
             <div class="dropdown">
                 <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="ti ti-search me-1"></i>Rechercher
+                    <i class="ti ti-search me-1"></i>@T("Rechercher")
                 </button>
                 <div class="dropdown-menu p-3" style="min-width: 280px;">
                     <div class="input-icon">
                         <span class="input-icon-addon"><i class="ti ti-search"></i></span>
-                        <input type="text" class="form-control" placeholder="Titre, description, plans..."
+                        <input type="text" class="form-control" placeholder="@(T("Titre, description, plans..."))"
                                @bind="_searchTerm" @bind:event="oninput" @onkeyup="OnSearchChanged" />
                     </div>
                 </div>
             </div>
 
             <select class="form-select" style="width: auto;" @bind="_statusFilter" @bind:after="ApplyFilter">
-                <option value="open">Changements ouverts</option>
-                <option value="all">Tous les statuts</option>
+                <option value="open">@T("Changements ouverts")</option>
+                <option value="all">@T("Tous les statuts")</option>
                 @foreach (ChangeStatus status in ChangeLabels.Lifecycle)
                 {
                     <option value="@((int)status)">@ChangeLabels.For(status)</option>
@@ -32,7 +32,7 @@
             <label class="form-check form-switch align-self-center mb-0">
                 <input class="form-check-input" type="checkbox" checked="@_mineOnly"
                        @onchange="@((ChangeEventArgs e) => OnMineOnlyChanged((bool)(e.Value ?? false)))" />
-                <span class="form-check-label">Qui me sont attribués</span>
+                <span class="form-check-label">@T("Qui me sont attribués")</span>
             </label>
 
             @* Ce qui attend l'avis de l'utilisateur connecté : c'est la file de travail d'un
@@ -41,7 +41,7 @@
                 <input class="form-check-input" type="checkbox" checked="@_toApproveOnly"
                        @onchange="@((ChangeEventArgs e) => OnToApproveOnlyChanged((bool)(e.Value ?? false)))" />
                 <span class="form-check-label">
-                    À approuver par moi
+                    @T("À approuver par moi")
                     @if (_awaitingMyApproval.Count > 0)
                     {
                         <span class="badge bg-warning-lt ms-1">@_awaitingMyApproval.Count</span>
@@ -53,28 +53,26 @@
         <div class="btn-list align-items-center">
             <div class="dropdown">
                 <button type="button" class="btn btn-icon text-danger" data-bs-toggle="dropdown" aria-expanded="false"
-                        disabled="@(_selectedIds.Count == 0)" title="Supprimer la sélection">
+                        disabled="@(_selectedIds.Count == 0)" title="@(T("Supprimer la sélection"))">
                     <i class="ti ti-trash"></i>
                 </button>
                 <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 300px;">
                     <p class="mb-2">
-                        Supprimer @_selectedIds.Count changement(s), leurs suivis, tâches et
-                        approbations ? Les tickets et problèmes rattachés ne sont pas supprimés,
-                        seulement détachés.
+                        @T("Supprimer {0} changement(s), leurs suivis, tâches et approbations ? Les tickets et problèmes rattachés ne sont pas supprimés, seulement détachés.", _selectedIds.Count)
                     </p>
                     <div class="d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-sm">Annuler</button>
-                        <button type="button" class="btn btn-sm btn-danger" @onclick="DeleteSelectedAsync">Supprimer</button>
+                        <button type="button" class="btn btn-sm">@T("Annuler")</button>
+                        <button type="button" class="btn btn-sm btn-danger" @onclick="DeleteSelectedAsync">@T("Supprimer")</button>
                     </div>
                 </div>
             </div>
 
-            <button type="button" class="btn btn-icon" @onclick="LoadAsync" title="Rafraîchir">
+            <button type="button" class="btn btn-icon" @onclick="LoadAsync" title="@(T("Rafraîchir"))">
                 <i class="ti ti-refresh"></i>
             </button>
 
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newChangeModal">
-                <i class="ti ti-plus me-1"></i>Ajouter
+                <i class="ti ti-plus me-1"></i>@T("Ajouter")
             </button>
         </div>
     </div>
@@ -84,25 +82,25 @@
             <thead>
                 <tr>
                     <th style="width: 2.5rem;">
-                        <input class="form-check-input m-0" type="checkbox" title="Sélectionner les éléments visibles"
+                        <input class="form-check-input m-0" type="checkbox" title="@(T("Sélectionner les éléments visibles"))"
                                checked="@AllSelected"
                                @onchange="@((ChangeEventArgs e) => ToggleSelectAll((bool)(e.Value ?? false)))" />
                     </th>
                     <th style="width: 5rem;">N°</th>
-                    <th>Titre</th>
-                    <th>Statut</th>
-                    <th>Approbation</th>
-                    <th>Priorité</th>
-                    <th>Catégorie</th>
-                    <th>Attribué à</th>
-                    <th>Ouvert le</th>
-                    <th>Échéance</th>
+                    <th>@T("Titre")</th>
+                    <th>@T("Statut")</th>
+                    <th>@T("Approbation")</th>
+                    <th>@T("Priorité")</th>
+                    <th>@T("Catégorie")</th>
+                    <th>@T("Attribué à")</th>
+                    <th>@T("Ouvert le")</th>
+                    <th>@T("Échéance")</th>
                 </tr>
             </thead>
             <tbody>
                 @if (_filtered.Count == 0)
                 {
-                    <tr><td colspan="10" class="text-center text-secondary py-4">Aucun changement.</td></tr>
+                    <tr><td colspan="10" class="text-center text-secondary py-4">@T("Aucun changement.")</td></tr>
                 }
                 else
                 {
@@ -150,16 +148,16 @@
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="ti ti-replace me-2"></i>Nouvel élément - Changement</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                <h5 class="modal-title"><i class="ti ti-replace me-2"></i>@T("Nouvel élément - Changement")</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@(T("Fermer"))"></button>
             </div>
             <div class="modal-body">
                 <div class="glping-fiche-field">
-                    <label>Titre<span class="text-danger ms-1" title="Champ obligatoire">*</span></label>
+                    <label>@T("Titre")<span class="text-danger ms-1" title="@(T("Champ obligatoire"))">*</span></label>
                     <input class="form-control" @bind="_newChange.Name" @bind:event="oninput" />
                 </div>
                 <div class="glping-fiche-field">
-                    <label>Description</label>
+                    <label>@T("Description")</label>
                     <textarea class="form-control" rows="4" @bind="_newChange.Content"></textarea>
                 </div>
                 @* Deux colonnes au plus : un champ de fiche pose son libellé à côté de la liste, et à
@@ -167,7 +165,7 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="glping-fiche-field">
-                            <label>Urgence</label>
+                            <label>@T("Urgence")</label>
                             <select class="form-select" value="@((int)_newChange.Urgency)"
                                     @onchange="@(e => _newChange.Urgency = (ItilLevel)int.Parse(e.Value?.ToString() ?? "3"))">
                                 @foreach (ItilLevel level in Enum.GetValues<ItilLevel>())
@@ -179,7 +177,7 @@
                     </div>
                     <div class="col-md-6">
                         <div class="glping-fiche-field">
-                            <label>Impact</label>
+                            <label>@T("Impact")</label>
                             <select class="form-select" value="@((int)_newChange.Impact)"
                                     @onchange="@(e => _newChange.Impact = (ItilLevel)int.Parse(e.Value?.ToString() ?? "3"))">
                                 @foreach (ItilLevel level in Enum.GetValues<ItilLevel>())
@@ -191,7 +189,7 @@
                     </div>
                 </div>
                 <div class="glping-fiche-field">
-                    <label>Catégorie</label>
+                    <label>@T("Catégorie")</label>
                     <select class="form-select" @bind="_newCategoryId">
                         <option value="0">—</option>
                         @foreach (TicketCategory category in _categories)
@@ -201,15 +199,13 @@
                     </select>
                 </div>
                 <p class="hint">
-                    Analyse, plans de déploiement et de retour arrière, approbations, tickets et
-                    problèmes rattachés se renseignent sur la fiche. La priorité se calcule à partir
-                    de l'urgence et de l'impact.
+                    @T("Analyse, plans de déploiement et de retour arrière, approbations, tickets et problèmes rattachés se renseignent sur la fiche. La priorité se calcule à partir de l'urgence et de l'impact.")
                 </p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-warning" disabled="@string.IsNullOrWhiteSpace(_newChange.Name)"
                         @onclick="CreateAsync">
-                    <i class="ti ti-plus me-1"></i>Ajouter
+                    <i class="ti ti-plus me-1"></i>@T("Ajouter")
                 </button>
             </div>
         </div>

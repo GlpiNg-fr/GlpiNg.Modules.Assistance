@@ -2,6 +2,7 @@ using BlazorBootstrap;
 using GlpiNg.Modules.Assistance.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
+using GlpiNg.Modules.Abstractions.Localization;
 
 namespace GlpiNg.Modules.Assistance.Components.Pages.ServiceLevels;
 
@@ -96,7 +97,7 @@ public partial class Detail : ComponentBase
 
         if (string.IsNullOrWhiteSpace(_level.Name))
         {
-            _error = "Le nom est obligatoire.";
+            _error = Tr.T("Le nom est obligatoire.");
             _activeTab = "fiche";
             return;
         }
@@ -123,7 +124,7 @@ public partial class Detail : ComponentBase
 
             await db.SaveChangesAsync();
 
-            ToastService.Notify(new ToastMessage(ToastType.Success, "Niveau de service enregistré."));
+            ToastService.Notify(new ToastMessage(ToastType.Success, Tr.T("Niveau de service enregistré.")));
             await LoadAsync();
         }
         finally
@@ -141,7 +142,7 @@ public partial class Detail : ComponentBase
 
         if (_newAgreement.DurationValue <= 0)
         {
-            _agreementError = "La durée doit être d'au moins une unité.";
+            _agreementError = Tr.T("La durée doit être d'au moins une unité.");
             return;
         }
 
@@ -152,7 +153,7 @@ public partial class Detail : ComponentBase
 
         if (duplicate)
         {
-            _agreementError = $"Ce niveau a déjà un {ServiceLevelLabels.ShortFor(_newAgreement.Kind)} sur "
+            _agreementError = Tr.T("Ce niveau a déjà un {0} sur ", ServiceLevelLabels.ShortFor(_newAgreement.Kind))
                 + $"« {ServiceLevelLabels.For(_newAgreement.Target).ToLowerInvariant()} ». "
                 + "Modifiez-le plutôt que d'en ajouter un second.";
 
@@ -178,7 +179,7 @@ public partial class Detail : ComponentBase
     {
         if (_ticketCounts.GetValueOrDefault(agreementId) > 0)
         {
-            _agreementError = "Engagement non supprimé : des tickets le portent encore. "
+            _agreementError = Tr.T("Engagement non supprimé : des tickets le portent encore. ")
                 + "Retirez-le de ces tickets d'abord.";
 
             return;

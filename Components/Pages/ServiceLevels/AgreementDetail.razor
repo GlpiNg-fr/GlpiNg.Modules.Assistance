@@ -1,11 +1,11 @@
 @page "/config/service-levels/agreements/{AgreementId:int}"
 @rendermode InteractiveServer
 
-<PageTitle>@(_agreement is null ? "Engagement" : _agreement.Name) — GlpiNg</PageTitle>
+<PageTitle>@(_agreement is null ? T("Engagement") : _agreement.Name) — GlpiNg</PageTitle>
 
 @if (_agreement is null)
 {
-    <div class="card"><div class="card-body text-center text-secondary py-5">Engagement introuvable.</div></div>
+    <div class="card"><div class="card-body text-center text-secondary py-5">@T("Engagement introuvable.")</div></div>
 }
 else
 {
@@ -20,10 +20,10 @@ else
             </h2>
             <div class="btn-list">
                 <a class="btn" href="@($"/config/service-levels/{_agreement.ServiceLevelId}")">
-                    <i class="ti ti-arrow-left me-1"></i>Retour au niveau de service
+                    <i class="ti ti-arrow-left me-1"></i>@T("Retour au niveau de service")
                 </a>
                 <button type="button" class="btn btn-warning" disabled="@_isSaving" @onclick="SaveAsync">
-                    <i class="ti ti-device-floppy me-1"></i>Enregistrer
+                    <i class="ti ti-device-floppy me-1"></i>@T("Enregistrer")
                 </button>
             </div>
         </div>
@@ -35,7 +35,7 @@ else
                     <button type="button" class="glping-fiche-tab-item @(_activeTab == key ? "active" : "")"
                             @onclick="() => _activeTab = key">
                         <i class="ti @icon"></i>
-                        <span>@label</span>
+                        <span>@T(label)</span>
                         @if (count is { } value)
                         {
                             <span class="glping-fiche-tab-count">@value</span>
@@ -54,20 +54,19 @@ else
                         }
 
                         <div class="glping-fiche-field">
-                            <label>Nom<span class="text-danger ms-1">*</span></label>
+                            <label>@T("Nom")<span class="text-danger ms-1">*</span></label>
                             <input class="form-control" @bind="_agreement.Name" />
                         </div>
                         <div class="glping-fiche-field">
-                            <label>Niveau de service</label>
+                            <label>@T("Niveau de service")</label>
                             <input class="form-control" disabled value="@_levelName" />
                         </div>
                         <div class="glping-fiche-field">
-                            <label>Calendrier</label>
-                            <input class="form-control" disabled value="@(_calendarName ?? "Aucun (temps réel, 24/7)")" />
+                            <label>@T("Calendrier")</label>
+                            <input class="form-control" disabled value="@(_calendarName ?? T("Aucun (temps réel, 24/7)"))" />
                         </div>
                         <p class="hint">
-                            Le calendrier se règle sur le niveau de service : tous ses engagements
-                            se comptent sur les mêmes heures.
+                            @T("Le calendrier se règle sur le niveau de service : tous ses engagements se comptent sur les mêmes heures.")
                         </p>
 
                         <hr />
@@ -75,13 +74,13 @@ else
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="glping-fiche-field">
-                                    <label>Durée</label>
+                                    <label>@T("Durée")</label>
                                     <input class="form-control" type="number" min="1" @bind="_agreement.DurationValue" />
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="glping-fiche-field">
-                                    <label>Unité</label>
+                                    <label>@T("Unité")</label>
                                     <select class="form-select" value="@((int)_agreement.DurationUnit)"
                                             @onchange="@(e => _agreement.DurationUnit = (ServiceLevelUnit)int.Parse(e.Value?.ToString() ?? "2"))">
                                         @foreach (ServiceLevelUnit unit in Enum.GetValues<ServiceLevelUnit>())
@@ -96,54 +95,49 @@ else
                         <label class="form-check">
                             <input class="form-check-input" type="checkbox" checked="@_agreement.EndOfWorkingDay"
                                    @onchange="@((ChangeEventArgs e) => _agreement.EndOfWorkingDay = (bool)(e.Value ?? false))" />
-                            <span class="form-check-label">Reporter l'échéance à la fin de la journée ouvrée</span>
+                            <span class="form-check-label">@T("Reporter l'échéance à la fin de la journée ouvrée")</span>
                         </label>
                         <p class="hint">
-                            Pour un engagement « à la journée » : ce qui compte est que ce soit fait
-                            avant la fermeture, pas à 14 h 37 précises.
+                            @T("Pour un engagement « à la journée » : ce qui compte est que ce soit fait avant la fermeture, pas à 14 h 37 précises.")
                         </p>
 
                         <div class="glping-fiche-field">
-                            <label>Commentaire</label>
+                            <label>@T("Commentaire")</label>
                             <textarea class="form-control" rows="3" @bind="_agreement.Comment"></textarea>
                         </div>
 
                         <div class="glping-fiche-field">
-                            <label>Tickets engagés</label>
+                            <label>@T("Tickets engagés")</label>
                             <input class="form-control" disabled value="@_ticketCount" />
                         </div>
                         break;
 
                     case "escalades":
                         <p class="text-secondary">
-                            Ce qui se produit quand l'échéance approche ou passe sans que le ticket
-                            soit traité. Un niveau ne s'applique qu'une fois par ticket, et un
-                            engagement déjà tenu n'escalade pas.
+                            @T("Ce qui se produit quand l'échéance approche ou passe sans que le ticket soit traité. Un niveau ne s'applique qu'une fois par ticket, et un engagement déjà tenu n'escalade pas.")
                         </p>
 
                         <div class="card mb-3">
                             <div class="card-body">
                                 <div class="row g-2 align-items-end">
                                     <div class="col-md-5">
-                                        <label class="form-label">Nom du niveau</label>
+                                        <label class="form-label">@T("Nom du niveau")</label>
                                         <input class="form-control" @bind="_newEscalationName" @bind:event="oninput" />
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label">Décalage (minutes)</label>
+                                        <label class="form-label">@T("Décalage (minutes)")</label>
                                         <input class="form-control" type="number" @bind="_newEscalationOffset" />
                                     </div>
                                     <div class="col-md-4">
                                         <button type="button" class="btn btn-primary w-100"
                                                 disabled="@string.IsNullOrWhiteSpace(_newEscalationName)"
                                                 @onclick="AddEscalationAsync">
-                                            <i class="ti ti-plus me-1"></i>Ajouter le niveau
+                                            <i class="ti ti-plus me-1"></i>@T("Ajouter le niveau")
                                         </button>
                                     </div>
                                 </div>
                                 <p class="hint mt-2 mb-0">
-                                    Négatif pour agir <strong>avant</strong> l'échéance (-60 = une
-                                    heure avant), positif pour agir après, zéro à l'échéance même.
-                                    Le décalage se compte en minutes ouvrées.
+                                    @T("Négatif pour agir") <strong>@T("avant")</strong> @T("l'échéance (-60 = une heure avant), positif pour agir après, zéro à l'échéance même. Le décalage se compte en minutes ouvrées.")
                                 </p>
                             </div>
                         </div>
@@ -152,7 +146,7 @@ else
                         {
                             <div class="glping-config-placeholder">
                                 <i class="ti ti-stairs-up"></i>
-                                <p class="mb-0">Aucun niveau d'escalade.</p>
+                                <p class="mb-0">@T("Aucun niveau d'escalade.")</p>
                             </div>
                         }
                         else
@@ -166,22 +160,22 @@ else
                                             <span class="badge bg-secondary-lt ms-2">@escalation.OffsetLabel</span>
                                             @if (!escalation.IsActive)
                                             {
-                                                <span class="badge bg-warning-lt ms-1">Inactif</span>
+                                                <span class="badge bg-warning-lt ms-1">@T("Inactif")</span>
                                             }
                                             @if (escalation.Actions.Count == 0)
                                             {
                                                 @* Un niveau sans action se déclenche et ne fait
                                                    rien : autant le dire ici. *@
-                                                <span class="badge bg-danger-lt ms-1">Aucune action</span>
+                                                <span class="badge bg-danger-lt ms-1">@T("Aucune action")</span>
                                             }
                                         </div>
                                         <div class="btn-list">
                                             <button type="button" class="btn btn-sm"
                                                     @onclick="() => ToggleEscalationAsync(escalation.Id, !escalation.IsActive)">
                                                 <i class="ti @(escalation.IsActive ? "ti-player-pause" : "ti-player-play") me-1"></i>
-                                                @(escalation.IsActive ? "Désactiver" : "Activer")
+                                                @(escalation.IsActive ? T("Désactiver") : T("Activer"))
                                             </button>
-                                            <button type="button" class="btn btn-icon btn-sm text-danger" title="Supprimer"
+                                            <button type="button" class="btn btn-icon btn-sm text-danger" title="@(T("Supprimer"))"
                                                     @onclick="() => DeleteEscalationAsync(escalation.Id)">
                                                 <i class="ti ti-trash"></i>
                                             </button>
@@ -194,8 +188,8 @@ else
                                                 <table class="table table-vcenter mb-0">
                                                     <thead>
                                                         <tr>
-                                                            <th>Action</th>
-                                                            <th>Valeur</th>
+                                                            <th>@T("Action")</th>
+                                                            <th>@T("Valeur")</th>
                                                             <th style="width: 3rem;"></th>
                                                         </tr>
                                                     </thead>
@@ -207,7 +201,7 @@ else
                                                                 <td class="text-secondary">@DescribeValue(action)</td>
                                                                 <td>
                                                                     <button type="button" class="btn btn-icon btn-sm text-danger"
-                                                                            title="Supprimer"
+                                                                            title="@(T("Supprimer"))"
                                                                             @onclick="() => DeleteActionAsync(action.Id)">
                                                                         <i class="ti ti-trash"></i>
                                                                     </button>
@@ -221,7 +215,7 @@ else
 
                                         <div class="row g-2 align-items-end">
                                             <div class="col-md-4">
-                                                <label class="form-label">Ajouter une action</label>
+                                                <label class="form-label">@T("Ajouter une action")</label>
                                                 <select class="form-select" value="@((int)ActionTypeFor(escalation.Id))"
                                                         @onchange="@(e => SetActionType(escalation.Id, e.Value?.ToString()))">
                                                     @foreach (EscalationActionType type in Enum.GetValues<EscalationActionType>())
@@ -231,7 +225,7 @@ else
                                                 </select>
                                             </div>
                                             <div class="col-md-6">
-                                                <label class="form-label">Valeur</label>
+                                                <label class="form-label">@T("Valeur")</label>
                                                 @switch (ActionTypeFor(escalation.Id))
                                                 {
                                                     case EscalationActionType.SetPriority:
@@ -279,7 +273,7 @@ else
                                                         break;
 
                                                     case EscalationActionType.AddFollowup:
-                                                        <input class="form-control" placeholder="Texte du suivi interne"
+                                                        <input class="form-control" placeholder="@(T("Texte du suivi interne"))"
                                                                value="@ActionValueFor(escalation.Id)"
                                                                @oninput="@(e => SetActionValue(escalation.Id, e.Value?.ToString()))" />
                                                         break;
@@ -293,7 +287,7 @@ else
                                             <div class="col-md-2">
                                                 <button type="button" class="btn btn-primary w-100"
                                                         @onclick="() => AddActionAsync(escalation.Id)">
-                                                    <i class="ti ti-plus me-1"></i>Ajouter
+                                                    <i class="ti ti-plus me-1"></i>@T("Ajouter")
                                                 </button>
                                             </div>
                                         </div>

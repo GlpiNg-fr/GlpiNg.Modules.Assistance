@@ -1,4 +1,5 @@
 using GlpiNg.Modules.Abstractions.Entities;
+using GlpiNg.Modules.Abstractions.Localization;
 
 namespace GlpiNg.Modules.Assistance.Models;
 
@@ -243,17 +244,17 @@ public static class ChangeLabels
 {
     public static string For(ChangeStatus status) => status switch
     {
-        ChangeStatus.New => "Nouveau",
-        ChangeStatus.Evaluation => "Évaluation",
-        ChangeStatus.Approval => "Approbation",
-        ChangeStatus.Accepted => "Accepté",
-        ChangeStatus.Waiting => "En attente",
-        ChangeStatus.Test => "Test",
-        ChangeStatus.Qualification => "Qualification",
-        ChangeStatus.Solved => "Appliqué",
-        ChangeStatus.Observed => "Revue",
-        ChangeStatus.Closed => "Clos",
-        ChangeStatus.Canceled => "Annulé",
+        ChangeStatus.New => Tr.T("Nouveau"),
+        ChangeStatus.Evaluation => Tr.T("Évaluation"),
+        ChangeStatus.Approval => Tr.T("Approbation"),
+        ChangeStatus.Accepted => Tr.T("Accepté"),
+        ChangeStatus.Waiting => Tr.T("En attente"),
+        ChangeStatus.Test => Tr.T("Test"),
+        ChangeStatus.Qualification => Tr.T("Qualification"),
+        ChangeStatus.Solved => Tr.T("Appliqué"),
+        ChangeStatus.Observed => Tr.T("Revue"),
+        ChangeStatus.Closed => Tr.T("Clos"),
+        ChangeStatus.Canceled => Tr.T("Annulé"),
         _ => status.ToString(),
     };
 
@@ -274,10 +275,10 @@ public static class ChangeLabels
 
     public static string For(ChangeValidationStatus status) => status switch
     {
-        ChangeValidationStatus.None => "Non soumis",
-        ChangeValidationStatus.Waiting => "En attente",
-        ChangeValidationStatus.Accepted => "Accepté",
-        ChangeValidationStatus.Refused => "Refusé",
+        ChangeValidationStatus.None => Tr.T("Non soumis"),
+        ChangeValidationStatus.Waiting => Tr.T("En attente"),
+        ChangeValidationStatus.Accepted => Tr.T("Accepté"),
+        ChangeValidationStatus.Refused => Tr.T("Refusé"),
         _ => status.ToString(),
     };
 

@@ -5,6 +5,7 @@ using GlpiNg.Modules.Assistance.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
+using GlpiNg.Modules.Abstractions.Localization;
 
 namespace GlpiNg.Modules.Assistance.Components.Pages.Problems;
 
@@ -251,7 +252,7 @@ public partial class Detail : ComponentBase
 
         if (string.IsNullOrWhiteSpace(_problem.Name))
         {
-            _error = "Le titre est obligatoire.";
+            _error = Tr.T("Le titre est obligatoire.");
             _activeTab = "fiche";
             return;
         }
@@ -325,7 +326,7 @@ public partial class Detail : ComponentBase
 
             await db.SaveChangesAsync();
 
-            ToastService.Notify(new ToastMessage(ToastType.Success, "Problème enregistré."));
+            ToastService.Notify(new ToastMessage(ToastType.Success, Tr.T("Problème enregistré.")));
             await LoadAsync();
         }
         finally

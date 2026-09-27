@@ -1,5 +1,6 @@
 using System.Globalization;
 using GlpiNg.Modules.Assistance.Models;
+using GlpiNg.Modules.Abstractions.Localization;
 
 namespace GlpiNg.Modules.Assistance.Services;
 
@@ -61,7 +62,8 @@ public sealed record StatSummary(
 /// </summary>
 public static class ItilStatistics
 {
-    private static readonly CultureInfo French = CultureInfo.GetCultureInfo("fr-FR");
+    // Noms de jours et de mois dans la langue de l'interface (voir Tr), pas dans celle du serveur.
+    private static CultureInfo UiCulture => CultureInfo.CurrentUICulture;
 
     /// <summary>Au-delà, une répartition regroupe le reste sous « Autres » : une liste de cinquante
     /// catégories ne se lit plus.</summary>
@@ -192,10 +194,10 @@ public static class ItilStatistics
 
         if (value.TotalHours >= 1)
         {
-            return value.Minutes == 0 ? $"{value.Hours} h" : $"{value.Hours} h {value.Minutes} min";
+            return value.Minutes == 0 ? $"{value.Hours} h" : Tr.T("{0} h {1} min", value.Hours, value.Minutes);
         }
 
-        return $"{Math.Max(1, (int)Math.Round(value.TotalMinutes))} min";
+        return Tr.T("{0} min", Math.Max(1, (int)Math.Round(value.TotalMinutes)));
     }
 
     private static DateTime BucketStart(DateTime date, StatBucketSize size) => size switch
@@ -214,15 +216,15 @@ public static class ItilStatistics
 
     private static string Label(DateTime start, StatBucketSize size) => size switch
     {
-        StatBucketSize.Day => start.ToString("dd/MM", French),
-        StatBucketSize.Week => start.ToString("dd/MM", French),
-        _ => start.ToString("MMM yy", French),
+        StatBucketSize.Day => start.ToString("dd/MM", UiCulture),
+        StatBucketSize.Week => start.ToString("dd/MM", UiCulture),
+        _ => start.ToString("MMM yy", UiCulture),
     };
 
     private static string LongLabel(DateTime start, DateTime next, StatBucketSize size) => size switch
     {
-        StatBucketSize.Day => start.ToString("dddd d MMMM yyyy", French),
-        StatBucketSize.Week => $"Semaine du {start.ToString("d MMMM", French)} au {next.AddDays(-1).ToString("d MMMM yyyy", French)}",
-        _ => start.ToString("MMMM yyyy", French),
+        StatBucketSize.Day => start.ToString("dddd d MMMM yyyy", UiCulture),
+        StatBucketSize.Week => Tr.T("Semaine du {0} au {1}", start.ToString("d MMMM", UiCulture), next.AddDays(-1).ToString("d MMMM yyyy", UiCulture)),
+        _ => start.ToString("MMMM yyyy", UiCulture),
     };
 }

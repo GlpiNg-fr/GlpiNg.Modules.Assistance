@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
+using GlpiNg.Modules.Abstractions.Localization;
 
 namespace GlpiNg.Modules.Assistance.Components.Pages.Categories;
 
@@ -259,7 +260,7 @@ public partial class Index : ComponentBase
 
         if (refused.Count > 0)
         {
-            _error = "Catégorie(s) non supprimée(s), encore utilisée(s) par des tickets ou portant "
+            _error = Tr.T("Catégorie(s) non supprimée(s), encore utilisée(s) par des tickets ou portant ")
                 + $"des sous-catégories : {string.Join(", ", stored.Where(category => refused.Contains(category.Id)).Select(category => category.Name))}.";
         }
         else

@@ -7,6 +7,7 @@ using GlpiNg.Modules.Assistance.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
+using GlpiNg.Modules.Abstractions.Localization;
 
 namespace GlpiNg.Modules.Assistance.Components.Pages.Tickets;
 
@@ -294,7 +295,7 @@ public partial class Detail : ComponentBase
 
         if (string.IsNullOrWhiteSpace(_ticket.Name))
         {
-            _error = "Le titre est obligatoire.";
+            _error = Tr.T("Le titre est obligatoire.");
             _activeTab = "fiche";
             return;
         }
@@ -396,7 +397,7 @@ public partial class Detail : ComponentBase
 
             await db.SaveChangesAsync();
 
-            ToastService.Notify(new ToastMessage(ToastType.Success, "Ticket enregistré."));
+            ToastService.Notify(new ToastMessage(ToastType.Success, Tr.T("Ticket enregistré.")));
             await LoadAsync();
         }
         finally

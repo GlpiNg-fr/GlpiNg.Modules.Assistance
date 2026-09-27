@@ -1,11 +1,11 @@
 @page "/assistance/changes/{ChangeId:int}"
 @rendermode InteractiveServer
 
-<PageTitle>@(_change is null ? "Changement" : $"#{_change.Id} {_change.Name}") — GlpiNg</PageTitle>
+<PageTitle>@(_change is null ? T("Changement") : $"#{_change.Id} {_change.Name}") — GlpiNg</PageTitle>
 
 @if (_change is null)
 {
-    <div class="card"><div class="card-body text-center text-secondary py-5">Changement introuvable.</div></div>
+    <div class="card"><div class="card-body text-center text-secondary py-5">@T("Changement introuvable.")</div></div>
 }
 else
 {
@@ -18,49 +18,48 @@ else
                 @if (_change.GlobalValidation != ChangeValidationStatus.None)
                 {
                     <span class="badge @ChangeLabels.BadgeFor(_change.GlobalValidation) ms-1"
-                          title="État global des approbations">
+                          title="@(T("État global des approbations"))">
                         <i class="ti ti-gavel me-1"></i>@ChangeLabels.For(_change.GlobalValidation)
                     </span>
                 }
                 @if (_change.IsOverdue)
                 {
-                    <span class="badge bg-danger-lt ms-1">En retard</span>
+                    <span class="badge bg-danger-lt ms-1">@T("En retard")</span>
                 }
             </h2>
             <div class="btn-list">
-                <a class="btn" href="/assistance/changes"><i class="ti ti-arrow-left me-1"></i>Retour à la liste</a>
+                <a class="btn" href="/assistance/changes"><i class="ti ti-arrow-left me-1"></i>@T("Retour à la liste")</a>
 
                 @if (_change.IsOpen)
                 {
                     <button type="button" class="btn btn-success" @onclick="@(() => _activeTab = "solution")">
-                        <i class="ti ti-check me-1"></i>Appliquer
+                        <i class="ti ti-check me-1"></i>@T("Appliquer")
                     </button>
                 }
                 else
                 {
                     <button type="button" class="btn" @onclick="ReopenAsync">
-                        <i class="ti ti-rotate-2 me-1"></i>Rouvrir
+                        <i class="ti ti-rotate-2 me-1"></i>@T("Rouvrir")
                     </button>
                 }
 
                 <div class="dropdown">
                     <button type="button" class="btn btn-icon text-danger" data-bs-toggle="dropdown" aria-expanded="false"
-                            title="Supprimer">
+                            title="@(T("Supprimer"))">
                         <i class="ti ti-trash"></i>
                     </button>
                     <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 300px;">
                         <p class="mb-2">
-                            Supprimer ce changement, ses suivis, tâches et approbations ? Les tickets et
-                            problèmes rattachés ne sont pas supprimés, seulement détachés.
+                            @T("Supprimer ce changement, ses suivis, tâches et approbations ? Les tickets et problèmes rattachés ne sont pas supprimés, seulement détachés.")
                         </p>
                         <div class="d-flex justify-content-end gap-2">
-                            <button type="button" class="btn btn-sm">Annuler</button>
-                            <button type="button" class="btn btn-sm btn-danger" @onclick="DeleteAsync">Supprimer</button>
+                            <button type="button" class="btn btn-sm">@T("Annuler")</button>
+                            <button type="button" class="btn btn-sm btn-danger" @onclick="DeleteAsync">@T("Supprimer")</button>
                         </div>
                     </div>
                 </div>
                 <button type="button" class="btn btn-warning" disabled="@_isSaving" @onclick="SaveAsync">
-                    <i class="ti ti-device-floppy me-1"></i>Enregistrer
+                    <i class="ti ti-device-floppy me-1"></i>@T("Enregistrer")
                 </button>
             </div>
         </div>
@@ -72,7 +71,7 @@ else
                     <button type="button" class="glping-fiche-tab-item @(_activeTab == key ? "active" : "")"
                             @onclick="() => _activeTab = key">
                         <i class="ti @icon"></i>
-                        <span>@label</span>
+                        <span>@T(label)</span>
                         @if (count is { } value)
                         {
                             <span class="glping-fiche-tab-count">@value</span>
@@ -93,15 +92,15 @@ else
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="glping-fiche-field">
-                                    <label>Titre<span class="text-danger ms-1">*</span></label>
+                                    <label>@T("Titre")<span class="text-danger ms-1">*</span></label>
                                     <input class="form-control" @bind="_change.Name" />
                                 </div>
                                 <div class="glping-fiche-field">
-                                    <label>Description</label>
+                                    <label>@T("Description")</label>
                                     <textarea class="form-control" rows="6" @bind="_change.Content"></textarea>
                                 </div>
                                 <div class="glping-fiche-field">
-                                    <label>Statut</label>
+                                    <label>@T("Statut")</label>
                                     <select class="form-select" value="@((int)_change.Status)" @onchange="OnStatusChanged">
                                         @foreach (ChangeStatus status in ChangeLabels.Lifecycle)
                                         {
@@ -110,7 +109,7 @@ else
                                     </select>
                                 </div>
                                 <div class="glping-fiche-field">
-                                    <label>Catégorie</label>
+                                    <label>@T("Catégorie")</label>
                                     <select class="form-select" @bind="_categoryId">
                                         <option value="0">—</option>
                                         @foreach (TicketCategory category in _categories)
@@ -122,7 +121,7 @@ else
                             </div>
                             <div class="col-md-6">
                                 <div class="glping-fiche-field">
-                                    <label>Rédacteur</label>
+                                    <label>@T("Rédacteur")</label>
                                     <select class="form-select" @bind="_authorId">
                                         <option value="0">—</option>
                                         @foreach (var user in _users)
@@ -132,7 +131,7 @@ else
                                     </select>
                                 </div>
                                 <div class="glping-fiche-field">
-                                    <label>Attribué au technicien</label>
+                                    <label>@T("Attribué au technicien")</label>
                                     <select class="form-select" @bind="_assignedUserId">
                                         <option value="0">—</option>
                                         @foreach (var user in _users)
@@ -142,7 +141,7 @@ else
                                     </select>
                                 </div>
                                 <div class="glping-fiche-field">
-                                    <label>Attribué au groupe</label>
+                                    <label>@T("Attribué au groupe")</label>
                                     <select class="form-select" @bind="_assignedGroupId">
                                         <option value="0">—</option>
                                         @foreach (var group in _groups)
@@ -157,7 +156,7 @@ else
                                 <div class="row">
                                     <div class="col-6">
                                         <div class="glping-fiche-field">
-                                            <label>Urgence</label>
+                                            <label>@T("Urgence")</label>
                                             <select class="form-select" value="@((int)_change.Urgency)"
                                                     @onchange="OnUrgencyChanged">
                                                 @foreach (ItilLevel level in Enum.GetValues<ItilLevel>())
@@ -169,7 +168,7 @@ else
                                     </div>
                                     <div class="col-6">
                                         <div class="glping-fiche-field">
-                                            <label>Impact</label>
+                                            <label>@T("Impact")</label>
                                             <select class="form-select" value="@((int)_change.Impact)"
                                                     @onchange="OnImpactChanged">
                                                 @foreach (ItilLevel level in Enum.GetValues<ItilLevel>())
@@ -183,10 +182,10 @@ else
 
                                 <div class="glping-fiche-field">
                                     <label>
-                                        Priorité
+                                        @T("Priorité")
                                         @if (!_change.IsPriorityManual)
                                         {
-                                            <span class="text-secondary ms-1">(calculée)</span>
+                                            <span class="text-secondary ms-1">@T("(calculée)")</span>
                                         }
                                     </label>
                                     <div class="d-flex align-items-center gap-2">
@@ -200,30 +199,30 @@ else
                                         @if (_change.IsPriorityManual)
                                         {
                                             <button type="button" class="btn btn-sm text-nowrap" @onclick="ResetPriority"
-                                                    title="Revenir à la priorité déduite de l'urgence et de l'impact">
-                                                <i class="ti ti-refresh me-1"></i>Recalculer
+                                                    title="@(T("Revenir à la priorité déduite de l'urgence et de l'impact"))">
+                                                <i class="ti ti-refresh me-1"></i>@T("Recalculer")
                                             </button>
                                         }
                                     </div>
                                 </div>
                                 @if (_change.IsPriorityManual)
                                 {
-                                    <p class="hint">Forcée à la main : elle ne suivra plus l'urgence ni l'impact.</p>
+                                    <p class="hint">@T("Forcée à la main : elle ne suivra plus l'urgence ni l'impact.")</p>
                                 }
 
                                 <div class="glping-fiche-field">
-                                    <label>Échéance</label>
+                                    <label>@T("Échéance")</label>
                                     <input class="form-control" type="datetime-local" @bind="_change.DueDate" />
                                 </div>
                                 <div class="glping-fiche-field">
-                                    <label>Ouvert le</label>
+                                    <label>@T("Ouvert le")</label>
                                     <input class="form-control" disabled
                                            value="@Display.DateTime(_change.OpenedAt)" />
                                 </div>
                                 @if (_change.SolvedAt is { } solved)
                                 {
                                     <div class="glping-fiche-field">
-                                        <label>Appliqué le</label>
+                                        <label>@T("Appliqué le")</label>
                                         <input class="form-control" disabled
                                                value="@Display.DateTime(solved)" />
                                     </div>
@@ -234,72 +233,69 @@ else
 
                     case "analyse":
                         <p class="text-secondary">
-                            Avant de toucher à ce qui marche : ce que le changement impacte, et ce
-                            qu'on vérifie pour s'assurer qu'il est sans risque.
+                            @T("Avant de toucher à ce qui marche : ce que le changement impacte, et ce qu'on vérifie pour s'assurer qu'il est sans risque.")
                         </p>
 
                         <div class="glping-fiche-field">
-                            <label>Impacts</label>
+                            <label>@T("Impacts")</label>
                             <textarea class="form-control" rows="6"
-                                      placeholder="Services, utilisateurs, dépendances touchés ; interruption prévue…"
+                                      placeholder="@(T("Services, utilisateurs, dépendances touchés ; interruption prévue…"))"
                                       @bind="_change.ImpactContent"></textarea>
                         </div>
                         <div class="glping-fiche-field">
-                            <label>Liste de contrôle</label>
+                            <label>@T("Liste de contrôle")</label>
                             <textarea class="form-control" rows="6"
-                                      placeholder="Ce qu'on vérifie avant de décider : prérequis, compatibilité, sauvegardes…"
+                                      placeholder="@(T("Ce qu'on vérifie avant de décider : prérequis, compatibilité, sauvegardes…"))"
                                       @bind="_change.ControlListContent"></textarea>
                         </div>
                         break;
 
                     case "plans":
                         <p class="text-secondary">
-                            Comment on l'applique, comment on revient en arrière si ça tourne mal, et
-                            ce qu'on coche le jour J.
+                            @T("Comment on l'applique, comment on revient en arrière si ça tourne mal, et ce qu'on coche le jour J.")
                         </p>
 
                         <div class="glping-fiche-field">
-                            <label>Plan de déploiement</label>
+                            <label>@T("Plan de déploiement")</label>
                             <textarea class="form-control" rows="6"
-                                      placeholder="Étapes d'application, ordre, fenêtre d'intervention…"
+                                      placeholder="@(T("Étapes d'application, ordre, fenêtre d'intervention…"))"
                                       @bind="_change.RolloutPlanContent"></textarea>
                         </div>
                         <div class="glping-fiche-field">
-                            <label>Plan de retour arrière</label>
+                            <label>@T("Plan de retour arrière")</label>
                             <textarea class="form-control" rows="6"
-                                      placeholder="Comment revenir à l'état d'avant, et à partir de quand le décider…"
+                                      placeholder="@(T("Comment revenir à l'état d'avant, et à partir de quand le décider…"))"
                                       @bind="_change.BackoutPlanContent"></textarea>
                         </div>
                         <div class="glping-fiche-field">
-                            <label>Checklist</label>
+                            <label>@T("Checklist")</label>
                             <textarea class="form-control" rows="6"
-                                      placeholder="Les points à cocher pendant et après l'application…"
+                                      placeholder="@(T("Les points à cocher pendant et après l'application…"))"
                                       @bind="_change.ChecklistContent"></textarea>
                         </div>
                         break;
 
                     case "approbations":
                         <p class="text-secondary">
-                            Un changement se fait approuver avant d'être appliqué. Un refus suffit à le
-                            refuser ; il faut l'accord de chaque approbateur pour qu'il soit accepté.
+                            @T("Un changement se fait approuver avant d'être appliqué. Un refus suffit à le refuser ; il faut l'accord de chaque approbateur pour qu'il soit accepté.")
                         </p>
 
                         @if (_change.GlobalValidation == ChangeValidationStatus.Refused)
                         {
                             <div class="alert alert-danger">
-                                Approbation refusée : revoyez le changement, ou demandez une nouvelle approbation.
+                                @T("Approbation refusée : revoyez le changement, ou demandez une nouvelle approbation.")
                             </div>
                         }
                         else if (_change.GlobalValidation == ChangeValidationStatus.Accepted)
                         {
-                            <div class="alert alert-success">Changement approuvé par tous les approbateurs sollicités.</div>
+                            <div class="alert alert-success">@T("Changement approuvé par tous les approbateurs sollicités.")</div>
                         }
 
                         <div class="card mb-3">
                             <div class="card-body">
                                 <div class="row g-2 align-items-end">
                                     <div class="col-md-4">
-                                        <label class="form-label">Approbateur</label>
+                                        <label class="form-label">@T("Approbateur")</label>
                                         <select class="form-select" @bind="_validatorToRequest">
                                             <option value="0">—</option>
                                             @foreach (var user in _users)
@@ -309,21 +305,21 @@ else
                                         </select>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label">Commentaire de la demande</label>
+                                        <label class="form-label">@T("Commentaire de la demande")</label>
                                         <input class="form-control" @bind="_validationRequestComment" @bind:event="oninput"
-                                               placeholder="Ce sur quoi l'avis est attendu…" />
+                                               placeholder="@(T("Ce sur quoi l'avis est attendu…"))" />
                                     </div>
                                     <div class="col-md-2">
                                         <button type="button" class="btn btn-primary w-100"
                                                 disabled="@(_validatorToRequest == 0 || _validatorAlreadyWaiting)" @onclick="RequestValidationAsync">
-                                            <i class="ti ti-send me-1"></i>Demander
+                                            <i class="ti ti-send me-1"></i>@T("Demander")
                                         </button>
                                     </div>
                                 </div>
                                 @if (_validatorAlreadyWaiting)
                                 {
                                     <p class="hint text-warning mt-2 mb-0">
-                                        Une approbation de cet utilisateur est déjà en attente.
+                                        @T("Une approbation de cet utilisateur est déjà en attente.")
                                     </p>
                                 }
                             </div>
@@ -333,7 +329,7 @@ else
                         {
                             <div class="glping-config-placeholder">
                                 <i class="ti ti-gavel"></i>
-                                <p class="mb-0">Aucune approbation demandée.</p>
+                                <p class="mb-0">@T("Aucune approbation demandée.")</p>
                             </div>
                         }
                         else
@@ -349,7 +345,7 @@ else
                                             </div>
                                             @if (validation.Status == ChangeValidationStatus.Waiting)
                                             {
-                                                <button type="button" class="btn btn-icon btn-sm text-danger" title="Retirer la demande"
+                                                <button type="button" class="btn btn-icon btn-sm text-danger" title="@(T("Retirer la demande"))"
                                                         @onclick="() => DeleteValidationAsync(validation.Id)">
                                                     <i class="ti ti-trash"></i>
                                                 </button>
@@ -368,7 +364,7 @@ else
                                         {
                                             <div class="border-top mt-2 pt-2">
                                                 <div class="text-secondary small">
-                                                    Réponse le @Display.DateTime(answeredAt)
+                                                    @T("Réponse le {0}", Display.DateTime(answeredAt))
                                                 </div>
                                                 @if (!string.IsNullOrWhiteSpace(validation.ValidationComment))
                                                 {
@@ -381,17 +377,17 @@ else
                                             @* Seul l'approbateur désigné répond : une approbation donnée par un autre
                                                n'en serait pas une. *@
                                             <div class="border-top mt-2 pt-2">
-                                                <textarea class="form-control mb-2" rows="2" placeholder="Votre réponse (obligatoire pour un refus)…"
+                                                <textarea class="form-control mb-2" rows="2" placeholder="@(T("Votre réponse (obligatoire pour un refus)…"))"
                                                           value="@_answers.GetValueOrDefault(validation.Id)"
                                                           @oninput="@(e => _answers[validation.Id] = e.Value?.ToString() ?? string.Empty)"></textarea>
                                                 <button type="button" class="btn btn-success btn-sm"
                                                         @onclick="() => AnswerValidationAsync(validation.Id, ChangeValidationStatus.Accepted)">
-                                                    <i class="ti ti-check me-1"></i>Accepter
+                                                    <i class="ti ti-check me-1"></i>@T("Accepter")
                                                 </button>
                                                 <button type="button" class="btn btn-danger btn-sm ms-1"
                                                         disabled="@string.IsNullOrWhiteSpace(_answers.GetValueOrDefault(validation.Id))"
                                                         @onclick="() => AnswerValidationAsync(validation.Id, ChangeValidationStatus.Refused)">
-                                                    <i class="ti ti-x me-1"></i>Refuser
+                                                    <i class="ti ti-x me-1"></i>@T("Refuser")
                                                 </button>
                                             </div>
                                         }
@@ -403,14 +399,14 @@ else
 
                     case "tickets":
                         <p class="text-secondary">
-                            Les tickets à l'origine de ce changement, ou qu'il vient régler.
+                            @T("Les tickets à l'origine de ce changement, ou qu'il vient régler.")
                         </p>
 
                         <div class="card mb-3">
                             <div class="card-body">
                                 <div class="row g-2 align-items-end">
                                     <div class="col-md-10">
-                                        <label class="form-label">Rattacher un ticket</label>
+                                        <label class="form-label">@T("Rattacher un ticket")</label>
                                         <select class="form-select" @bind="_ticketToAttach">
                                             <option value="0">—</option>
                                             @foreach (Ticket candidate in _ticketCandidates)
@@ -424,7 +420,7 @@ else
                                     <div class="col-md-2">
                                         <button type="button" class="btn btn-primary w-100"
                                                 disabled="@(_ticketToAttach == 0)" @onclick="AttachTicketAsync">
-                                            <i class="ti ti-link me-1"></i>Rattacher
+                                            <i class="ti ti-link me-1"></i>@T("Rattacher")
                                         </button>
                                     </div>
                                 </div>
@@ -435,7 +431,7 @@ else
                         {
                             <div class="glping-config-placeholder">
                                 <i class="ti ti-ticket-off"></i>
-                                <p class="mb-0">Aucun ticket rattaché.</p>
+                                <p class="mb-0">@T("Aucun ticket rattaché.")</p>
                             </div>
                         }
                         else
@@ -445,10 +441,10 @@ else
                                     <thead>
                                         <tr>
                                             <th style="width: 5rem;">N°</th>
-                                            <th>Titre</th>
-                                            <th>Statut</th>
-                                            <th>Priorité</th>
-                                            <th>Ouvert le</th>
+                                            <th>@T("Titre")</th>
+                                            <th>@T("Statut")</th>
+                                            <th>@T("Priorité")</th>
+                                            <th>@T("Ouvert le")</th>
                                             <th style="width: 3rem;"></th>
                                         </tr>
                                     </thead>
@@ -464,7 +460,7 @@ else
                                                 <td><span class="badge @ItilLabels.BadgeFor(ticket.Priority)">@ItilLabels.For(ticket.Priority)</span></td>
                                                 <td class="text-secondary">@Display.DateTime(ticket.OpenedAt)</td>
                                                 <td>
-                                                    <button type="button" class="btn btn-icon btn-sm text-danger" title="Détacher"
+                                                    <button type="button" class="btn btn-icon btn-sm text-danger" title="@(T("Détacher"))"
                                                             @onclick="() => DetachTicketAsync(ticket.Id)">
                                                         <i class="ti ti-unlink"></i>
                                                     </button>
@@ -479,14 +475,14 @@ else
 
                     case "problemes":
                         <p class="text-secondary">
-                            Les problèmes dont ce changement traite la cause.
+                            @T("Les problèmes dont ce changement traite la cause.")
                         </p>
 
                         <div class="card mb-3">
                             <div class="card-body">
                                 <div class="row g-2 align-items-end">
                                     <div class="col-md-10">
-                                        <label class="form-label">Rattacher un problème</label>
+                                        <label class="form-label">@T("Rattacher un problème")</label>
                                         <select class="form-select" @bind="_problemToAttach">
                                             <option value="0">—</option>
                                             @foreach (Problem candidate in _problemCandidates)
@@ -500,7 +496,7 @@ else
                                     <div class="col-md-2">
                                         <button type="button" class="btn btn-primary w-100"
                                                 disabled="@(_problemToAttach == 0)" @onclick="AttachProblemAsync">
-                                            <i class="ti ti-link me-1"></i>Rattacher
+                                            <i class="ti ti-link me-1"></i>@T("Rattacher")
                                         </button>
                                     </div>
                                 </div>
@@ -511,7 +507,7 @@ else
                         {
                             <div class="glping-config-placeholder">
                                 <i class="ti ti-bulb-off"></i>
-                                <p class="mb-0">Aucun problème rattaché.</p>
+                                <p class="mb-0">@T("Aucun problème rattaché.")</p>
                             </div>
                         }
                         else
@@ -521,10 +517,10 @@ else
                                     <thead>
                                         <tr>
                                             <th style="width: 5rem;">N°</th>
-                                            <th>Titre</th>
-                                            <th>Statut</th>
-                                            <th>Priorité</th>
-                                            <th>Ouvert le</th>
+                                            <th>@T("Titre")</th>
+                                            <th>@T("Statut")</th>
+                                            <th>@T("Priorité")</th>
+                                            <th>@T("Ouvert le")</th>
                                             <th style="width: 3rem;"></th>
                                         </tr>
                                     </thead>
@@ -542,7 +538,7 @@ else
                                                 <td><span class="badge @ItilLabels.BadgeFor(problem.Priority)">@ItilLabels.For(problem.Priority)</span></td>
                                                 <td class="text-secondary">@Display.DateTime(problem.OpenedAt)</td>
                                                 <td>
-                                                    <button type="button" class="btn btn-icon btn-sm text-danger" title="Détacher"
+                                                    <button type="button" class="btn btn-icon btn-sm text-danger" title="@(T("Détacher"))"
                                                             @onclick="() => DetachProblemAsync(problem.Id)">
                                                         <i class="ti ti-unlink"></i>
                                                     </button>
@@ -557,21 +553,21 @@ else
 
                     case "suivis":
                         <p class="text-secondary">
-                            Le fil du changement. Un suivi interne reste entre intervenants.
+                            @T("Le fil du changement. Un suivi interne reste entre intervenants.")
                         </p>
 
                         <div class="mb-3">
-                            <textarea class="form-control" rows="3" placeholder="Ajouter un suivi…"
+                            <textarea class="form-control" rows="3" placeholder="@(T("Ajouter un suivi…"))"
                                       @bind="_newFollowup" @bind:event="oninput"></textarea>
                             <div class="d-flex align-items-center gap-3 mt-2">
                                 <button type="button" class="btn btn-primary"
                                         disabled="@string.IsNullOrWhiteSpace(_newFollowup)" @onclick="AddFollowupAsync">
-                                    <i class="ti ti-plus me-1"></i>Ajouter
+                                    <i class="ti ti-plus me-1"></i>@T("Ajouter")
                                 </button>
                                 <label class="form-check mb-0">
                                     <input class="form-check-input" type="checkbox" checked="@_newFollowupPrivate"
                                            @onchange="@((ChangeEventArgs e) => _newFollowupPrivate = (bool)(e.Value ?? false))" />
-                                    <span class="form-check-label">Suivi interne</span>
+                                    <span class="form-check-label">@T("Suivi interne")</span>
                                 </label>
                             </div>
                         </div>
@@ -580,7 +576,7 @@ else
                         {
                             <div class="glping-config-placeholder">
                                 <i class="ti ti-message-off"></i>
-                                <p class="mb-0">Aucun suivi.</p>
+                                <p class="mb-0">@T("Aucun suivi.")</p>
                             </div>
                         }
                         else
@@ -598,10 +594,10 @@ else
                                                 </span>
                                                 @if (followup.IsPrivate)
                                                 {
-                                                    <span class="badge bg-warning-lt ms-2">Interne</span>
+                                                    <span class="badge bg-warning-lt ms-2">@T("Interne")</span>
                                                 }
                                             </div>
-                                            <button type="button" class="btn btn-icon btn-sm text-danger" title="Supprimer"
+                                            <button type="button" class="btn btn-icon btn-sm text-danger" title="@(T("Supprimer"))"
                                                     @onclick="() => DeleteFollowupAsync(followup.Id)">
                                                 <i class="ti ti-trash"></i>
                                             </button>
@@ -614,18 +610,18 @@ else
 
                     case "taches":
                         <p class="text-secondary">
-                            Travaux de préparation, d'application ou de vérification, planifiables et attribuables.
+                            @T("Travaux de préparation, d'application ou de vérification, planifiables et attribuables.")
                         </p>
 
                         <div class="card mb-3">
                             <div class="card-body">
                                 <div class="row g-2 align-items-end">
                                     <div class="col-md-5">
-                                        <label class="form-label">Tâche</label>
+                                        <label class="form-label">@T("Tâche")</label>
                                         <input class="form-control" @bind="_newTask.Content" @bind:event="oninput" />
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label">Technicien</label>
+                                        <label class="form-label">@T("Technicien")</label>
                                         <select class="form-select" @bind="_newTaskUserId">
                                             <option value="0">—</option>
                                             @foreach (var user in _users)
@@ -635,7 +631,7 @@ else
                                         </select>
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label">Planifiée le</label>
+                                        <label class="form-label">@T("Planifiée le")</label>
                                         <input class="form-control" type="datetime-local" @bind="_newTask.PlannedStart" />
                                     </div>
                                     <div class="col-md-1">
@@ -652,7 +648,7 @@ else
                         {
                             <div class="glping-config-placeholder">
                                 <i class="ti ti-checklist"></i>
-                                <p class="mb-0">Aucune tâche.</p>
+                                <p class="mb-0">@T("Aucune tâche.")</p>
                             </div>
                         }
                         else
@@ -662,10 +658,10 @@ else
                                     <thead>
                                         <tr>
                                             <th style="width: 3rem;"></th>
-                                            <th>Tâche</th>
-                                            <th>Technicien</th>
-                                            <th>Planifiée</th>
-                                            <th>Durée</th>
+                                            <th>@T("Tâche")</th>
+                                            <th>@T("Technicien")</th>
+                                            <th>@T("Planifiée")</th>
+                                            <th>@T("Durée")</th>
                                             <th style="width: 3rem;"></th>
                                         </tr>
                                     </thead>
@@ -691,7 +687,7 @@ else
                                                     @(task.DurationMinutes is { } minutes ? $"{minutes} min" : "—")
                                                 </td>
                                                 <td>
-                                                    <button type="button" class="btn btn-icon btn-sm text-danger" title="Supprimer"
+                                                    <button type="button" class="btn btn-icon btn-sm text-danger" title="@(T("Supprimer"))"
                                                             @onclick="() => DeleteTaskAsync(task.Id)">
                                                         <i class="ti ti-trash"></i>
                                                     </button>
@@ -706,24 +702,23 @@ else
 
                     case "solution":
                         string appliedOn = _change.SolvedAt is { } solvedDate
-                            ? $" le {Display.DateTime(solvedDate)}"
+                            ? T(" le {0}", Display.DateTime(solvedDate))
                             : string.Empty;
 
                         @if (_change.Status is ChangeStatus.Observed)
                         {
                             <div class="alert alert-info">
-                                Changement appliqué@(appliedOn), en revue : il reste ouvert tant que son
-                                effet n'est pas confirmé.
+                                @T("Changement appliqué{0}, en revue : il reste ouvert tant que son effet n'est pas confirmé.", appliedOn)
                             </div>
                         }
                         else if (_change.Status is ChangeStatus.Canceled)
                         {
-                            <div class="alert alert-secondary">Changement annulé sans avoir été appliqué.</div>
+                            <div class="alert alert-secondary">@T("Changement annulé sans avoir été appliqué.")</div>
                         }
                         else if (!_change.IsOpen)
                         {
                             <div class="alert alert-success">
-                                Changement @ChangeLabels.For(_change.Status).ToLowerInvariant()@(appliedOn).
+                                @T("Changement {0}{1}.", ChangeLabels.For(_change.Status).ToLowerInvariant(), appliedOn)
                             </div>
                         }
                         else
@@ -733,26 +728,24 @@ else
                             @if (_change.GlobalValidation != ChangeValidationStatus.Accepted)
                             {
                                 <div class="alert alert-warning">
-                                    Ce changement n'est pas approuvé
-                                    (approbation : @ChangeLabels.For(_change.GlobalValidation).ToLowerInvariant()).
+                                    @T("Ce changement n'est pas approuvé (approbation : {0}).", ChangeLabels.For(_change.GlobalValidation).ToLowerInvariant())
                                 </div>
                             }
                             @if (string.IsNullOrWhiteSpace(_change.BackoutPlanContent))
                             {
                                 <div class="alert alert-warning">
-                                    Aucun plan de retour arrière : rien ne dit comment revenir en arrière si
-                                    l'application tourne mal (onglet Plans).
+                                    @T("Aucun plan de retour arrière : rien ne dit comment revenir en arrière si l'application tourne mal (onglet Plans).")
                                 </div>
                             }
                         }
 
                         <div class="glping-fiche-field">
-                            <label>Type de solution</label>
-                            <input class="form-control" placeholder="Mise à jour, changement de configuration…"
+                            <label>@T("Type de solution")</label>
+                            <input class="form-control" placeholder="@(T("Mise à jour, changement de configuration…"))"
                                    @bind="_change.SolutionType" />
                         </div>
                         <div class="glping-fiche-field">
-                            <label>Compte rendu d'application</label>
+                            <label>@T("Compte rendu d'application")</label>
                             <textarea class="form-control" rows="6" @bind="_change.Solution" @bind:event="oninput"></textarea>
                         </div>
 
@@ -761,29 +754,28 @@ else
                             <button type="button" class="btn btn-success" disabled="@string.IsNullOrWhiteSpace(_change.Solution)"
                                     @onclick="ApplyAsync">
                                 <i class="ti ti-check me-1"></i>
-                                @(_change.Status is ChangeStatus.Observed ? "Confirmer l'application" : "Marquer comme appliqué")
+                                @(_change.Status is ChangeStatus.Observed ? T("Confirmer l'application") : T("Marquer comme appliqué"))
                             </button>
 
                             @if (_change.Status is not ChangeStatus.Observed)
                             {
                                 <button type="button" class="btn ms-2" disabled="@string.IsNullOrWhiteSpace(_change.Solution)"
                                         @onclick="ReviewAsync">
-                                    <i class="ti ti-eye me-1"></i>Mettre en revue
+                                    <i class="ti ti-eye me-1"></i>@T("Mettre en revue")
                                 </button>
                             }
 
                             <button type="button" class="btn ms-2 text-danger" @onclick="CancelAsync">
-                                <i class="ti ti-ban me-1"></i>Annuler le changement
+                                <i class="ti ti-ban me-1"></i>@T("Annuler le changement")
                             </button>
                             <p class="hint">
-                                « En revue » enregistre l'application sans clore le changement : à
-                                choisir tant qu'on vérifie qu'il a produit l'effet voulu.
+                                @T("« En revue » enregistre l'application sans clore le changement : à choisir tant qu'on vérifie qu'il a produit l'effet voulu.")
                             </p>
                         }
                         else if (_change.Status is ChangeStatus.Solved)
                         {
                             <button type="button" class="btn" @onclick="CloseAsync">
-                                <i class="ti ti-lock me-1"></i>Clore le changement
+                                <i class="ti ti-lock me-1"></i>@T("Clore le changement")
                             </button>
                         }
                         break;

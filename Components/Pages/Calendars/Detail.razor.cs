@@ -4,6 +4,7 @@ using GlpiNg.Modules.Assistance.Models;
 using GlpiNg.Modules.Assistance.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
+using GlpiNg.Modules.Abstractions.Localization;
 
 // System.Globalization porte aussi un type « Calendar » : sans cet alias, chaque mention du nôtre
 // serait ambiguë dans ce fichier, qui a besoin des deux espaces de noms.
@@ -29,7 +30,8 @@ public partial class Detail : ComponentBase
         DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday,
     ];
 
-    private static readonly CultureInfo Culture = CultureInfo.GetCultureInfo("fr-FR");
+    // Noms de jours et de mois dans la langue de l'interface (voir Tr), pas dans celle du serveur.
+    private static CultureInfo UiCulture => CultureInfo.CurrentUICulture;
 
     private Calendar? _calendar;
     private List<ServiceLevel> _usedBy = [];
@@ -99,8 +101,8 @@ public partial class Detail : ComponentBase
     }
 
     private static string DayLabel(DayOfWeek day) =>
-        Culture.DateTimeFormat.GetDayName(day) is { Length: > 0 } name
-            ? char.ToUpper(name[0], Culture) + name[1..]
+        UiCulture.DateTimeFormat.GetDayName(day) is { Length: > 0 } name
+            ? char.ToUpper(name[0], UiCulture) + name[1..]
             : day.ToString();
 
     private string WeeklyHours()
@@ -119,7 +121,7 @@ public partial class Detail : ComponentBase
 
         if (string.IsNullOrWhiteSpace(_calendar.Name))
         {
-            _error = "Le nom est obligatoire.";
+            _error = Tr.T("Le nom est obligatoire.");
             _activeTab = "fiche";
             return;
         }
@@ -143,7 +145,7 @@ public partial class Detail : ComponentBase
 
             await db.SaveChangesAsync();
 
-            ToastService.Notify(new ToastMessage(ToastType.Success, "Calendrier enregistré."));
+            ToastService.Notify(new ToastMessage(ToastType.Success, Tr.T("Calendrier enregistré.")));
             await LoadAsync();
         }
         finally
@@ -161,7 +163,7 @@ public partial class Detail : ComponentBase
     {
         if (_newSegmentEnd <= _newSegmentStart)
         {
-            _segmentError = "La fin doit suivre le début.";
+            _segmentError = Tr.T("La fin doit suivre le début.");
             return;
         }
 
@@ -176,7 +178,7 @@ public partial class Detail : ComponentBase
 
         if (overlaps)
         {
-            _segmentError = $"Cette plage en chevauche une autre le {DayLabel(day).ToLower(Culture)}.";
+            _segmentError = Tr.T("Cette plage en chevauche une autre le {0}.", DayLabel(day).ToLower(UiCulture));
             return;
         }
 
@@ -229,7 +231,7 @@ public partial class Detail : ComponentBase
 
         if (end < start)
         {
-            _holidayError = "La date de fin précède la date de début.";
+            _holidayError = Tr.T("La date de fin précède la date de début.");
             return;
         }
 
@@ -297,7 +299,7 @@ public partial class Detail : ComponentBase
         if (deadline is null)
         {
             _probeImpossible = true;
-            _probeResult = "Ce calendrier n'ouvre jamais assez pour absorber cette durée : "
+            _probeResult = Tr.T("Ce calendrier n'ouvre jamais assez pour absorber cette durée : ")
                 + "l'échéance n'arriverait pas. Vérifiez les plages et les fermetures.";
 
             return;
@@ -305,10 +307,10 @@ public partial class Detail : ComponentBase
 
         _probeImpossible = false;
 
-        string elapsed = _probeStart.Value.ToString("dddd d MMMM yyyy à HH:mm", Culture);
-        string due = deadline.Value.ToString("dddd d MMMM yyyy à HH:mm", Culture);
+        string elapsed = Tr.T("{0} à {1}", _probeStart.Value.ToString("dddd d MMMM yyyy", UiCulture), _probeStart.Value.ToString("HH:mm", UiCulture));
+        string due = Tr.T("{0} à {1}", deadline.Value.ToString("dddd d MMMM yyyy", UiCulture), deadline.Value.ToString("HH:mm", UiCulture));
 
-        _probeResult = $"Départ le {elapsed} → échéance le {due} "
+        _probeResult = Tr.T("Départ le {0} → échéance le {1} ", elapsed, due)
             + $"(soit {(deadline.Value - _probeStart.Value).TotalHours:0.#} h réelles).";
     }
 

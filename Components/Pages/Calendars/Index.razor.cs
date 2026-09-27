@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
+using GlpiNg.Modules.Abstractions.Localization;
 
 namespace GlpiNg.Modules.Assistance.Components.Pages.Calendars;
 
@@ -117,7 +118,7 @@ public partial class Index : ComponentBase
 
         if (used.Count > 0)
         {
-            _error = "Calendrier non supprimé : il est utilisé par le(s) niveau(x) de service "
+            _error = Tr.T("Calendrier non supprimé : il est utilisé par le(s) niveau(x) de service ")
                 + $"{string.Join(", ", used)}.";
 
             return;

@@ -1,3 +1,4 @@
+using GlpiNg.Modules.Abstractions.Localization;
 namespace GlpiNg.Modules.Assistance.Models;
 
 /// <summary>
@@ -92,18 +93,18 @@ public static class ItilLabels
 {
     public static string For(ItilLevel level) => level switch
     {
-        ItilLevel.VeryLow => "Très basse",
-        ItilLevel.Low => "Basse",
-        ItilLevel.Medium => "Moyenne",
-        ItilLevel.High => "Haute",
-        ItilLevel.VeryHigh => "Très haute",
+        ItilLevel.VeryLow => Tr.T("Très basse"),
+        ItilLevel.Low => Tr.T("Basse"),
+        ItilLevel.Medium => Tr.T("Moyenne"),
+        ItilLevel.High => Tr.T("Haute"),
+        ItilLevel.VeryHigh => Tr.T("Très haute"),
         _ => level.ToString(),
     };
 
     public static string For(ItilTaskState state) => state switch
     {
-        ItilTaskState.ToDo => "À faire",
-        ItilTaskState.Done => "Terminée",
+        ItilTaskState.ToDo => Tr.T("À faire"),
+        ItilTaskState.Done => Tr.T("Terminée"),
         _ => state.ToString(),
     };
 

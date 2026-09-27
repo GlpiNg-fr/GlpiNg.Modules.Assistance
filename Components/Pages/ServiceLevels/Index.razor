@@ -1,7 +1,7 @@
 @page "/config/service-levels"
 @rendermode InteractiveServer
 
-<PageTitle>Niveaux de services — GlpiNg</PageTitle>
+<PageTitle>@T("Niveaux de services — GlpiNg")</PageTitle>
 
 <div class="glping-list-page">
 <div class="card">
@@ -9,28 +9,28 @@
         <div class="btn-list align-items-center">
             <div class="dropdown">
                 <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="ti ti-search me-1"></i>Rechercher
+                    <i class="ti ti-search me-1"></i>@T("Rechercher")
                 </button>
                 <div class="dropdown-menu p-3" style="min-width: 280px;">
                     <div class="input-icon">
                         <span class="input-icon-addon"><i class="ti ti-search"></i></span>
-                        <input type="text" class="form-control" placeholder="Nom, commentaire..."
+                        <input type="text" class="form-control" placeholder="@(T("Nom, commentaire..."))"
                                @bind="_searchTerm" @bind:event="oninput" @onkeyup="OnSearchChanged" />
                     </div>
                 </div>
             </div>
             <a class="btn" href="/config/calendars">
-                <i class="ti ti-calendar-time me-1"></i>Calendriers
+                <i class="ti ti-calendar-time me-1"></i>@T("Calendriers")
             </a>
         </div>
 
         <div class="btn-list align-items-center">
-            <button type="button" class="btn btn-icon" @onclick="LoadAsync" title="Rafraîchir">
+            <button type="button" class="btn btn-icon" @onclick="LoadAsync" title="@(T("Rafraîchir"))">
                 <i class="ti ti-refresh"></i>
             </button>
 
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newServiceLevelModal">
-                <i class="ti ti-plus me-1"></i>Ajouter
+                <i class="ti ti-plus me-1"></i>@T("Ajouter")
             </button>
         </div>
     </div>
@@ -38,10 +38,9 @@
     @* flex-grow-0 : voir la même remarque sur la liste des calendriers. *@
     <div class="card-body border-bottom py-3 flex-grow-0">
         <p class="text-secondary mb-0">
-            Un niveau de service regroupe les engagements pris dans un même cadre. Chacun porte un
-            <strong>SLA</strong> (envers le demandeur, compté depuis l'ouverture du ticket) ou un
-            <strong>OLA</strong> (interne, compté depuis l'attribution), sur la prise en charge ou
-            sur la résolution.
+            @T("Un niveau de service regroupe les engagements pris dans un même cadre. Chacun porte un")
+            <strong>@T("SLA")</strong> @T("(envers le demandeur, compté depuis l'ouverture du ticket) ou un")
+            <strong>@T("OLA")</strong> @T("(interne, compté depuis l'attribution), sur la prise en charge ou sur la résolution.")
         </p>
     </div>
 
@@ -54,19 +53,19 @@
         <table class="table table-vcenter card-table">
             <thead>
                 <tr>
-                    <th>Nom</th>
-                    <th>Calendrier</th>
-                    <th>SLA</th>
-                    <th>OLA</th>
-                    <th>Tickets engagés</th>
-                    <th>Commentaire</th>
+                    <th>@T("Nom")</th>
+                    <th>@T("Calendrier")</th>
+                    <th>@T("SLA")</th>
+                    <th>@T("OLA")</th>
+                    <th>@T("Tickets engagés")</th>
+                    <th>@T("Commentaire")</th>
                     <th style="width: 6rem;"></th>
                 </tr>
             </thead>
             <tbody>
                 @if (_filtered.Count == 0)
                 {
-                    <tr><td colspan="7" class="text-center text-secondary py-4">Aucun niveau de service.</td></tr>
+                    <tr><td colspan="7" class="text-center text-secondary py-4">@T("Aucun niveau de service.")</td></tr>
                 }
                 else
                 {
@@ -95,23 +94,22 @@
                             <td class="text-secondary">@_ticketCounts.GetValueOrDefault(level.Id)</td>
                             <td class="text-secondary">@level.Comment</td>
                             <td class="text-nowrap">
-                                <a class="btn btn-icon btn-sm" title="Ouvrir" href="@($"/config/service-levels/{level.Id}")">
+                                <a class="btn btn-icon btn-sm" title="@(T("Ouvrir"))" href="@($"/config/service-levels/{level.Id}")">
                                     <i class="ti ti-pencil"></i>
                                 </a>
                                 <div class="dropdown d-inline-block">
                                     <button type="button" class="btn btn-icon btn-sm text-danger"
-                                            data-bs-toggle="dropdown" aria-expanded="false" title="Supprimer">
+                                            data-bs-toggle="dropdown" aria-expanded="false" title="@(T("Supprimer"))">
                                         <i class="ti ti-trash"></i>
                                     </button>
                                     <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 300px;">
                                         <p class="mb-2">
-                                            Supprimer ce niveau de service, ses engagements et leurs
-                                            niveaux d'escalade ?
+                                            @T("Supprimer ce niveau de service, ses engagements et leurs niveaux d'escalade ?")
                                         </p>
                                         <div class="d-flex justify-content-end gap-2">
-                                            <button type="button" class="btn btn-sm">Annuler</button>
+                                            <button type="button" class="btn btn-sm">@T("Annuler")</button>
                                             <button type="button" class="btn btn-sm btn-danger"
-                                                    @onclick="() => DeleteAsync(level.Id)">Supprimer</button>
+                                                    @onclick="() => DeleteAsync(level.Id)">@T("Supprimer")</button>
                                         </div>
                                     </div>
                                 </div>
@@ -129,18 +127,18 @@
     <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="ti ti-clipboard-check me-2"></i>Nouvel élément - Niveau de service</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                <h5 class="modal-title"><i class="ti ti-clipboard-check me-2"></i>@T("Nouvel élément - Niveau de service")</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@(T("Fermer"))"></button>
             </div>
             <div class="modal-body">
                 <div class="glping-fiche-field">
-                    <label>Nom<span class="text-danger ms-1" title="Champ obligatoire">*</span></label>
+                    <label>@T("Nom")<span class="text-danger ms-1" title="@(T("Champ obligatoire"))">*</span></label>
                     <input class="form-control" @bind="_newLevel.Name" @bind:event="oninput" />
                 </div>
                 <div class="glping-fiche-field">
-                    <label>Calendrier</label>
+                    <label>@T("Calendrier")</label>
                     <select class="form-select" @bind="_newCalendarId">
-                        <option value="0">Aucun (temps réel, 24/7)</option>
+                        <option value="0">@T("Aucun (temps réel, 24/7)")</option>
                         @foreach (Calendar calendar in _calendars)
                         {
                             <option value="@calendar.Id">@calendar.Name</option>
@@ -148,15 +146,15 @@
                     </select>
                 </div>
                 <div class="glping-fiche-field">
-                    <label>Commentaire</label>
+                    <label>@T("Commentaire")</label>
                     <textarea class="form-control" rows="3" @bind="_newLevel.Comment"></textarea>
                 </div>
-                <p class="hint">Les engagements (SLA, OLA) se posent sur la fiche, une fois le niveau créé.</p>
+                <p class="hint">@T("Les engagements (SLA, OLA) se posent sur la fiche, une fois le niveau créé.")</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-warning" disabled="@string.IsNullOrWhiteSpace(_newLevel.Name)"
                         @onclick="CreateAsync">
-                    <i class="ti ti-plus me-1"></i>Ajouter
+                    <i class="ti ti-plus me-1"></i>@T("Ajouter")
                 </button>
             </div>
         </div>

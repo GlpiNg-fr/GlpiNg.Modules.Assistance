@@ -5,6 +5,7 @@ using GlpiNg.Modules.Assistance.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
+using GlpiNg.Modules.Abstractions.Localization;
 
 namespace GlpiNg.Modules.Assistance.Components.Pages.Statistics;
 
@@ -22,7 +23,8 @@ public partial class Index : ComponentBase, IDisposable
     [Inject]
     private IPrincipalDirectory Directory { get; set; } = null!;
 
-    private static readonly CultureInfo French = CultureInfo.GetCultureInfo("fr-FR");
+    // Noms de jours et de mois dans la langue de l'interface (voir Tr), pas dans celle du serveur.
+    private static CultureInfo UiCulture => CultureInfo.CurrentUICulture;
 
     [Inject]
     private IJSRuntime JS { get; set; } = null!;
@@ -74,7 +76,7 @@ public partial class Index : ComponentBase, IDisposable
 
     private string ItemsLabel => _itemType switch
     {
-        "problems" => "problèmes",
+        "problems" => Tr.T("problèmes"),
         "changes" => "changements",
         _ => "tickets",
     };
@@ -211,7 +213,7 @@ public partial class Index : ComponentBase, IDisposable
         _summary = ItilStatistics.Summarize(_items, _from, to);
         _buckets = ItilStatistics.Buckets(_items, _from, to);
 
-        _byCategory = ItilStatistics.Breakdown(_items, _from, to, item => item.Category ?? "Sans catégorie");
+        _byCategory = ItilStatistics.Breakdown(_items, _from, to, item => item.Category ?? Tr.T("Sans catégorie"));
         _byTechnician = ItilStatistics.Breakdown(_items, _from, to, item => NameOfUser(item.AssignedUserId));
         _byPriority = ItilStatistics.Breakdown(_items, _from, to, item => ItilLabels.For(item.Priority),
             [.. Enum.GetValues<ItilLevel>().Reverse().Select(ItilLabels.For)]);
@@ -241,7 +243,7 @@ public partial class Index : ComponentBase, IDisposable
 
     private string NameOfUser(int? id) => id is { } value
         ? _users.FirstOrDefault(user => user.Id == value)?.Name ?? $"#{value} (supprimé)"
-        : "Non attribué";
+        : Tr.T("Non attribué");
 
     /// <summary>Plafond de l'axe arrondi à 1, 2 ou 5 × 10ⁿ, avec des graduations entières.</summary>
     private static (int Max, List<int> Ticks) NiceScale(int max)
@@ -323,7 +325,7 @@ public partial class Index : ComponentBase, IDisposable
     }
 
     private static string Percent(int part, int total) =>
-        total == 0 ? "—" : (part * 100.0 / total).ToString("0", French) + " %";
+        total == 0 ? "—" : (part * 100.0 / total).ToString("0", UiCulture) + " %";
 
     private static string BarWidth(int value, int max) =>
         max == 0 ? "0%" : FormattableString.Invariant($"{value * 100.0 / max:0.#}%");

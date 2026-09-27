@@ -4,16 +4,16 @@
 @* Onglet « Notes » d'une fiche d'assistance, partagé par les objets du module. *@
 
 <p class="text-secondary">
-    Notes libres attachées à cet élément : le carnet de bord de ceux qui le suivent.
+    @T("Notes libres attachées à cet élément : le carnet de bord de ceux qui le suivent.")
 </p>
 
 <div class="mb-3">
-    <label class="form-label" for="assist-new-note">Ajouter une note</label>
+    <label class="form-label" for="assist-new-note">@T("Ajouter une note")</label>
     <textarea id="assist-new-note" class="form-control" rows="3"
               @bind="_newNote" @bind:event="oninput"></textarea>
     <button type="button" class="btn btn-primary mt-2"
             disabled="@string.IsNullOrWhiteSpace(_newNote)" @onclick="AddAsync">
-        <i class="ti ti-plus me-1"></i>Ajouter
+        <i class="ti ti-plus me-1"></i>@T("Ajouter")
     </button>
 </div>
 
@@ -21,7 +21,7 @@
 {
     <div class="glping-config-placeholder">
         <i class="ti ti-notes-off"></i>
-        <p class="mb-0">Aucune note pour cet élément.</p>
+        <p class="mb-0">@T("Aucune note pour cet élément.")</p>
     </div>
 }
 else
@@ -36,9 +36,9 @@ else
                     <div class="mt-2">
                         <button type="button" class="btn btn-primary btn-sm"
                                 disabled="@string.IsNullOrWhiteSpace(_editing)" @onclick="SaveEditAsync">
-                            Enregistrer
+                            @T("Enregistrer")
                         </button>
-                        <button type="button" class="btn btn-sm" @onclick="() => _editingId = null">Annuler</button>
+                        <button type="button" class="btn btn-sm" @onclick="() => _editingId = null">@T("Annuler")</button>
                     </div>
                 }
                 else
@@ -56,16 +56,16 @@ else
                             @if (note.UpdatedAt is { } updated)
                             {
                                 <span class="ms-2">
-                                    <i class="ti ti-pencil me-1"></i>Modifiée le @Display.DateTime(updated)
+                                    <i class="ti ti-pencil me-1"></i>@T("Modifiée le {0}", Display.DateTime(updated))
                                 </span>
                             }
                         </div>
                         <div class="text-nowrap">
-                            <button type="button" class="btn btn-icon btn-sm" title="Modifier"
+                            <button type="button" class="btn btn-icon btn-sm" title="@(T("Modifier"))"
                                     @onclick="() => StartEdit(note)">
                                 <i class="ti ti-pencil"></i>
                             </button>
-                            <button type="button" class="btn btn-icon btn-sm text-danger" title="Supprimer"
+                            <button type="button" class="btn btn-icon btn-sm text-danger" title="@(T("Supprimer"))"
                                     @onclick="() => DeleteAsync(note.Id)">
                                 <i class="ti ti-trash"></i>
                             </button>

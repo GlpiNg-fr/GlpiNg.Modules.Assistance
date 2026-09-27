@@ -1,4 +1,5 @@
 using GlpiNg.Modules.Abstractions.Entities;
+using GlpiNg.Modules.Abstractions.Localization;
 
 namespace GlpiNg.Modules.Assistance.Models;
 
@@ -140,14 +141,14 @@ public static class ProblemLabels
 {
     public static string For(ProblemStatus status) => status switch
     {
-        ProblemStatus.New => "Nouveau",
-        ProblemStatus.Accepted => "Accepté",
-        ProblemStatus.Assigned => "En cours (attribué)",
-        ProblemStatus.Planned => "En cours (planifié)",
-        ProblemStatus.Waiting => "En attente",
-        ProblemStatus.Solved => "Résolu",
-        ProblemStatus.Observed => "Sous observation",
-        ProblemStatus.Closed => "Clos",
+        ProblemStatus.New => Tr.T("Nouveau"),
+        ProblemStatus.Accepted => Tr.T("Accepté"),
+        ProblemStatus.Assigned => Tr.T("En cours (attribué)"),
+        ProblemStatus.Planned => Tr.T("En cours (planifié)"),
+        ProblemStatus.Waiting => Tr.T("En attente"),
+        ProblemStatus.Solved => Tr.T("Résolu"),
+        ProblemStatus.Observed => Tr.T("Sous observation"),
+        ProblemStatus.Closed => Tr.T("Clos"),
         _ => status.ToString(),
     };
 

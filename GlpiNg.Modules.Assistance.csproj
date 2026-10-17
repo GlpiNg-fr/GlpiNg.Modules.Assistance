@@ -19,8 +19,8 @@
 
   <ItemGroup>
     <!-- Abstractions EF Core seules : ni fournisseur, ni DbContext concret — voir les autres modules. -->
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.12" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.12" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.13" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.13" />
     <PackageReference Include="Blazor.Bootstrap" Version="4.0.0" />
   </ItemGroup>
 

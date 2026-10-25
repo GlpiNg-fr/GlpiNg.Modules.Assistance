@@ -1,0 +1,176 @@
+﻿@using GlpiNg.Modules.Abstractions.Items
+@inject IServiceProvider Services
+
+@* Onglet de rattachement d'une fiche de parc : certificats, domaines, tickets, analyse d'impact...
+   Une seule mécanique pour toutes les natures (ItemRelationKinds) ; seule la cible change. Le service
+   est résolu en facultatif, comme ItemContractsTab : un module absent ne doit pas empêcher la fiche de s'ouvrir. *@
+
+@if (_relations is null)
+{
+    <div class="glping-config-placeholder">
+        <i class="ti ti-link-off"></i>
+        <p class="mb-0">@T("Cette fonction n'est pas active sur cette installation.")</p>
+    </div>
+}
+else
+{
+    <div class="d-flex gap-2 mb-3 flex-wrap">
+        <input class="form-control" style="max-width: 260px;" placeholder="@(T("Rechercher à rattacher…"))"
+               @bind="_term" @bind:event="oninput" @onkeydown="OnKeyDown" />
+        <button type="button" class="btn" @onclick="SearchAsync"><i class="ti ti-search me-1"></i>@T("Rechercher")</button>
+
+        @if (_candidates.Count > 0)
+        {
+            <select class="form-select" style="max-width: 360px;" @bind="_selected">
+                <option value="">@T("Choisir…")</option>
+                @foreach (RelationTarget candidate in _candidates)
+                {
+                    <option value="@($"{candidate.ItemType}|{candidate.ItemId}")">@candidate.Name</option>
+                }
+            </select>
+            <button type="button" class="btn btn-primary" disabled="@string.IsNullOrEmpty(_selected)" @onclick="AddAsync">
+                <i class="ti ti-plus me-1"></i>@T("Ajouter")
+            </button>
+        }
+        else if (_searched)
+        {
+            <span class="text-secondary align-self-center">@T("Aucun résultat.")</span>
+        }
+    </div>
+
+    @if (_links.Count == 0)
+    {
+        <div class="glping-config-placeholder">
+            <i class="ti ti-link-off"></i>
+            <p class="mb-0">@T("Aucun élément rattaché.")</p>
+        </div>
+    }
+    else
+    {
+        @foreach (bool reverse in new[] { false, true })
+        {
+            List<ItemRelationLink> group = [.. _links.Where(l => l.Reverse == reverse)];
+            if (group.Count == 0)
+            {
+                continue;
+            }
+
+            @if (Relation == ItemRelationKinds.Impact)
+            {
+                <h4 class="mt-3">@T(reverse ? "Impacté par" : "Impacte")</h4>
+            }
+
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table">
+                    <thead><tr><th>@T("Type")</th><th>@T("Nom")</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (ItemRelationLink link in group)
+                        {
+                            <tr>
+                                <td class="text-secondary">@T(TypeLabel(link.Target.ItemType))</td>
+                                <td><a href="@link.Target.Url" class="text-reset fw-semibold">@link.Target.Name</a></td>
+                                <td class="text-end">
+                                    <button type="button" class="btn btn-icon btn-sm text-danger" title="@(T("Détacher"))"
+                                            @onclick="() => RemoveAsync(link.LinkId)">
+                                        <i class="ti ti-unlink"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    }
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public required string ItemType { get; set; }
+
+    [Parameter, EditorRequired]
+    public int ItemId { get; set; }
+
+    /// <summary>Nature du rattachement — voir <see cref="ItemRelationKinds"/>.</summary>
+    [Parameter, EditorRequired]
+    public required string Relation { get; set; }
+
+    /// <summary>Libellé français d'un type d'objet (les clés d'ItemTypes sont des noms de GLPI, pas des libellés).</summary>
+    private static string TypeLabel(string itemType) => itemType switch
+    {
+        "Computer" => "Ordinateur",
+        "Monitor" => "Moniteur",
+        "Peripheral" => "Périphérique",
+        "Printer" => "Imprimante",
+        "Phone" => "Téléphone",
+        "NetworkEquipment" => "Matériel réseau",
+        "Rack" => "Baie",
+        "Enclosure" => "Châssis",
+        "PDU" => "PDU",
+        "PassiveEquipment" => "Équipement passif",
+        "Cable" => "Câble",
+        "Appliance" => "Applicatif",
+        "Certificate" => "Certificat",
+        "Domain" => "Domaine",
+        "Project" => "Projet",
+        "Ticket" => "Ticket",
+        "Problem" => "Problème",
+        "Change" => "Changement",
+        "KnowbaseItem" => "Article",
+        _ => itemType,
+    };
+
+    private IItemRelations? _relations;
+    private List<ItemRelationLink> _links = [];
+    private List<RelationTarget> _candidates = [];
+    private string _term = string.Empty;
+    private string _selected = string.Empty;
+    private bool _searched;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _relations = Services.GetService(typeof(IItemRelations)) as IItemRelations;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        if (_relations is null)
+        {
+            return;
+        }
+
+        _links = [.. await _relations.GetAsync(ItemType, ItemId, Relation)];
+    }
+
+    private async Task SearchAsync()
+    {
+        _candidates = [.. await _relations!.SearchTargetsAsync(ItemType, ItemId, Relation, _term)];
+        _selected = string.Empty;
+        _searched = true;
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SearchAsync();
+        }
+    }
+
+    private async Task AddAsync()
+    {
+        string[] parts = _selected.Split('|');
+        await _relations!.AddAsync(ItemType, ItemId, Relation, parts[0], int.Parse(parts[1]));
+        _candidates = [];
+        _selected = string.Empty;
+        _searched = false;
+        await LoadAsync();
+    }
+
+    private async Task RemoveAsync(int linkId)
+    {
+        await _relations!.RemoveAsync(linkId);
+        await LoadAsync();
+    }
+}

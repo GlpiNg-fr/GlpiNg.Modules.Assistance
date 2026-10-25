@@ -24,9 +24,15 @@ public static class AssistanceModuleServiceCollectionExtensions
         // la fabrique de DbContext, elle-même Scoped.
         services.AddScoped<ServiceLevelService>();
 
+        // Tickets/problèmes/changements créés, pour la fiche utilisateur de l'hôte.
+        services.AddScoped<GlpiNg.Modules.Abstractions.Items.IUserItemSource, UserItemsSource>();
+
         // Applique les niveaux d'escalade au fil du temps. Comme tout ICronTask, il est exécuté
         // par le service cron de l'hôte et réglable depuis /config/automatic-actions.
         services.AddScoped<ICronTask, ServiceLevelEscalationCronTask>();
+
+        // Tickets, problèmes et changements, cibles des onglets de rattachement.
+        services.AddScoped<GlpiNg.Modules.Abstractions.Items.IRelationTargetSource, GlpiNg.Modules.Assistance.Services.RelationTargetSource>();
 
         return services;
     }

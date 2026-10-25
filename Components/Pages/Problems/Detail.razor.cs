@@ -75,6 +75,10 @@ public partial class Detail : ComponentBase
             yield return ("taches", "Tâches", "ti-checklist", _tasks.Count);
             yield return ("solution", "Solution", "ti-circle-check", null);
             yield return ("changements", "Changements", "ti-replace", _changes.Count);
+            yield return ("elements", "Éléments", "ti-device-desktop", null);
+            yield return ("baseconnaissances", "Base de connaissances", "ti-book", null);
+            yield return ("projets", "Projets", "ti-clipboard-list", null);
+            yield return ("contrats", "Contrats", "ti-file-text", null);
             yield return ("documents", "Documents", "ti-file", _documentCount);
             yield return ("notes", "Notes", "ti-notes", _noteCount);
             yield return ("historique", "Historique", "ti-history", _history.Count);

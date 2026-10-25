@@ -1,0 +1,113 @@
+@using GlpiNg.Modules.Abstractions.Items
+@inject IServiceProvider Services
+
+@* Onglet « Contrats » d'une fiche de parc. Le service est résolu en facultatif (comme
+   ItemReservationsTab) : le module Gestion peut être absent sans que la fiche cesse de s'ouvrir. *@
+
+@if (_contracts is null)
+{
+    <div class="glping-config-placeholder">
+        <i class="ti ti-file-off"></i>
+        <p class="mb-0">@T("Le module Gestion n'est pas actif sur cette installation.")</p>
+    </div>
+}
+else
+{
+    <div class="d-flex gap-2 mb-3">
+        <select class="form-select" style="max-width: 360px;" @bind="_selected">
+            <option value="0">@T("Rattacher un contrat…")</option>
+            @foreach (ContractOption option in _available)
+            {
+                <option value="@option.Id">@option.Name</option>
+            }
+        </select>
+        <button type="button" class="btn btn-primary" disabled="@(_selected == 0)" @onclick="AttachAsync">
+            <i class="ti ti-plus me-1"></i>@T("Ajouter")
+        </button>
+    </div>
+
+    @if (_links.Count == 0)
+    {
+        <div class="glping-config-placeholder">
+            <i class="ti ti-file-off"></i>
+            <p class="mb-0">@T("Aucun contrat rattaché à cet élément.")</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+                <thead>
+                    <tr>
+                        <th>@T("Nom")</th>
+                        <th>@T("Numéro")</th>
+                        <th>@T("Début")</th>
+                        <th>@T("Fin")</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (ItemContract link in _links)
+                    {
+                        <tr>
+                            <td><a href="@($"/management/contracts/{link.ContractId}")" class="text-reset fw-semibold">@link.Name</a></td>
+                            <td class="text-secondary">@link.Number</td>
+                            @* Dates saisies sur la fiche contrat : valeurs murales, jamais converties. *@
+                            <td class="text-secondary">@(link.StartDate is { } s ? Display.LocalDate(s) : "—")</td>
+                            <td class="text-secondary">@(link.EndDate is { } e ? Display.LocalDate(e) : "—")</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-icon btn-sm text-danger" title="@(T("Détacher"))"
+                                        @onclick="() => DetachAsync(link.LinkId)">
+                                    <i class="ti ti-unlink"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public required string ItemType { get; set; }
+
+    [Parameter, EditorRequired]
+    public int ItemId { get; set; }
+
+    private IItemContracts? _contracts;
+    private List<ItemContract> _links = [];
+    private List<ContractOption> _available = [];
+    private int _selected;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _contracts = Services.GetService(typeof(IItemContracts)) as IItemContracts;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        if (_contracts is null)
+        {
+            return;
+        }
+
+        _links = [.. await _contracts.GetForItemAsync(ItemType, ItemId)];
+        _available = [.. await _contracts.GetAvailableAsync(ItemType, ItemId)];
+        _selected = 0;
+    }
+
+    private async Task AttachAsync()
+    {
+        await _contracts!.AttachAsync(ItemType, ItemId, _selected);
+        await LoadAsync();
+    }
+
+    private async Task DetachAsync(int linkId)
+    {
+        await _contracts!.DetachAsync(linkId);
+        await LoadAsync();
+    }
+}

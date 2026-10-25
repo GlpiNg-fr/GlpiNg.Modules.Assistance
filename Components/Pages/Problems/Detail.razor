@@ -566,6 +566,22 @@ else
                                           Intro="@(T("Changements qui traitent la cause de ce problème. Le rattachement se fait depuis la fiche du changement."))" />
                         break;
 
+                    case "elements":
+                        <ItemAssetsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Problem" ItemId="ProblemId" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Problem" />
+                        break;
+
+                    case "baseconnaissances":
+                        <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Problem" ItemId="ProblemId" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Knowledge" />
+                        break;
+
+                    case "projets":
+                        <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Problem" ItemId="ProblemId" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Project" />
+                        break;
+
+                    case "contrats":
+                        <ItemContractsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Problem" ItemId="ProblemId" />
+                        break;
+
                     case "documents":
                         <ItemDocumentsTab ItemType="@ItemTypes.Problem" ItemId="ProblemId" AuthorName="@_currentUserName"
                                           CountChanged="count => _documentCount = count" />

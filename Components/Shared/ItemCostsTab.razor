@@ -1,0 +1,115 @@
+@using GlpiNg.Modules.Abstractions.Items
+@inject IServiceProvider Services
+
+@* Onglet « Coûts » d'un ticket, problème, changement ou projet. Le service est résolu en facultatif
+   (comme ItemContractsTab) : la fiche doit s'ouvrir même si la fonction est absente. *@
+
+@if (_costs is null)
+{
+    <div class="glping-config-placeholder">
+        <i class="ti ti-coin-off"></i>
+        <p class="mb-0">@T("Cette fonction n'est pas active sur cette installation.")</p>
+    </div>
+}
+else
+{
+    <div class="row g-2 mb-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label">@T("Nom")</label>
+            <input class="form-control" @bind="_name" @bind:event="oninput" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">@T("Date")</label>
+            <input type="date" class="form-control" @bind="_date" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">@T("Montant")</label>
+            <input type="number" step="0.01" class="form-control" @bind="_amount" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">@T("Commentaire")</label>
+            <input class="form-control" @bind="_comment" />
+        </div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-primary" disabled="@string.IsNullOrWhiteSpace(_name)" @onclick="AddAsync">
+                <i class="ti ti-plus"></i>
+            </button>
+        </div>
+    </div>
+
+    @if (_costs.Count == 0)
+    {
+        <div class="glping-config-placeholder">
+            <i class="ti ti-coin-off"></i>
+            <p class="mb-0">@T("Aucun coût.")</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+                <thead><tr><th>@T("Nom")</th><th>@T("Date")</th><th class="text-end">@T("Montant")</th><th>@T("Commentaire")</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (ItemCostLine cost in _costs)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@cost.Name</td>
+                            @* Date saisie à la main : valeur murale, jamais convertie. *@
+                            <td class="text-secondary">@(cost.Date is { } d ? Display.LocalDate(d) : "—")</td>
+                            <td class="text-end">@cost.Amount.ToString("N2")</td>
+                            <td class="text-secondary">@cost.Comment</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-icon btn-sm text-danger" title="@(T("Supprimer"))"
+                                        @onclick="() => RemoveAsync(cost.Id)">
+                                    <i class="ti ti-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr><th colspan="2">@T("Total")</th><th class="text-end">@_costs.Sum(c => c.Amount).ToString("N2")</th><th colspan="2"></th></tr>
+                </tfoot>
+            </table>
+        </div>
+    }
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public required string ItemType { get; set; }
+
+    [Parameter, EditorRequired]
+    public int ItemId { get; set; }
+
+    private IItemCosts? _service;
+    private List<ItemCostLine>? _costs;
+    private string _name = string.Empty;
+    private DateTime? _date;
+    private decimal _amount;
+    private string? _comment;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _service = Services.GetService(typeof(IItemCosts)) as IItemCosts;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync() => _costs = _service is null ? null : [.. await _service.GetAsync(ItemType, ItemId)];
+
+    private async Task AddAsync()
+    {
+        await _service!.AddAsync(ItemType, ItemId, _name, _date, _amount, _comment);
+        _name = string.Empty;
+        _date = null;
+        _amount = 0;
+        _comment = null;
+        await LoadAsync();
+    }
+
+    private async Task RemoveAsync(int id)
+    {
+        await _service!.RemoveAsync(id);
+        await LoadAsync();
+    }
+}

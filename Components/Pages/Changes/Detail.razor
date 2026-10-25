@@ -780,6 +780,14 @@ else
                         }
                         break;
 
+                    case "statistiques":
+                        <ItilStatsTab OpenedAt="@_change.OpenedAt" SolvedAt="@_change.SolvedAt" ClosedAt="@_change.ClosedAt" DueDate="@_change.DueDate" FollowupCount="_followups.Count" TaskCount="_tasks.Count" />
+                        break;
+
+                    case "couts":
+                        <ItemCostsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Change" ItemId="ChangeId" />
+                        break;
+
                     case "elements":
                         <ItemAssetsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Change" ItemId="ChangeId" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Change" />
                         break;

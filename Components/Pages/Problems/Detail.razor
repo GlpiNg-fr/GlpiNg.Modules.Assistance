@@ -566,6 +566,14 @@ else
                                           Intro="@(T("Changements qui traitent la cause de ce problème. Le rattachement se fait depuis la fiche du changement."))" />
                         break;
 
+                    case "statistiques":
+                        <ItilStatsTab OpenedAt="@_problem.OpenedAt" SolvedAt="@_problem.SolvedAt" ClosedAt="@_problem.ClosedAt" DueDate="@_problem.DueDate" FollowupCount="_followups.Count" TaskCount="_tasks.Count" />
+                        break;
+
+                    case "couts":
+                        <ItemCostsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Problem" ItemId="ProblemId" />
+                        break;
+
                     case "elements":
                         <ItemAssetsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Problem" ItemId="ProblemId" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Problem" />
                         break;

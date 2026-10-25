@@ -1,0 +1,48 @@
+@using GlpiNg.Modules.Abstractions.Localization
+@* Onglet « Statistiques » d'un ticket, problème ou changement : les délais qui se déduisent des dates de la fiche.
+   Les instants sont stockés en UTC : Display.DateTime les convertit pour l'affichage, mais les durées se calculent sur les UTC. *@
+
+<div class="glping-fiche-block">
+    <div class="glping-fiche-block-title"><i class="ti ti-chart-bar"></i>@T("Délais")</div>
+    <table class="table table-vcenter card-table mb-0">
+        <tbody>
+            <tr><th>@T("Ouvert le")</th><td>@Display.DateTime(OpenedAt)</td></tr>
+            @if (TakenIntoAccountAt is { } taken)
+            {
+                <tr><th>@T("Prise en compte")</th><td>@Display.DateTime(taken) <span class="text-secondary">(@Span(taken - OpenedAt))</span></td></tr>
+            }
+            @if (SolvedAt is { } solved)
+            {
+                <tr><th>@T("Résolu le")</th><td>@Display.DateTime(solved) <span class="text-secondary">(@Span(solved - OpenedAt))</span></td></tr>
+            }
+            @if (ClosedAt is { } closed)
+            {
+                <tr><th>@T("Clos le")</th><td>@Display.DateTime(closed) <span class="text-secondary">(@Span(closed - OpenedAt))</span></td></tr>
+            }
+            @if (DueDate is { } due)
+            {
+                @* Échéance saisie à la main : valeur murale. *@
+                <tr>
+                    <th>@T("Échéance")</th>
+                    <td>@Display.LocalDateTime(due)</td>
+                </tr>
+            }
+            <tr><th>@T("Suivis")</th><td>@FollowupCount</td></tr>
+            <tr><th>@T("Tâches")</th><td>@TaskCount</td></tr>
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter] public DateTime OpenedAt { get; set; }
+    [Parameter] public DateTime? TakenIntoAccountAt { get; set; }
+    [Parameter] public DateTime? SolvedAt { get; set; }
+    [Parameter] public DateTime? ClosedAt { get; set; }
+    [Parameter] public DateTime? DueDate { get; set; }
+    [Parameter] public int FollowupCount { get; set; }
+    [Parameter] public int TaskCount { get; set; }
+
+    private static string Span(TimeSpan span) => span.TotalDays >= 1
+        ? Tr.T("{0} j {1} h", (int)span.TotalDays, span.Hours)
+        : span.TotalHours >= 1 ? Tr.T("{0} h {1} min", (int)span.TotalHours, span.Minutes) : Tr.T("{0} min", Math.Max(0, (int)span.TotalMinutes));
+}

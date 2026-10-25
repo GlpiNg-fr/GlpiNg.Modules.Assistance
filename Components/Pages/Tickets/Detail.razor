@@ -648,6 +648,18 @@ else
                                           Intro="@(T("Changements à l'origine desquels est ce ticket, ou qui viennent le régler. Le rattachement se fait depuis la fiche du changement."))" />
                         break;
 
+                    case "validations":
+                        <TicketValidationsTab TicketId="TicketId" />
+                        break;
+
+                    case "statistiques":
+                        <ItilStatsTab OpenedAt="@_ticket.OpenedAt" TakenIntoAccountAt="@_ticket.TakenIntoAccountAt" SolvedAt="@_ticket.SolvedAt" ClosedAt="@_ticket.ClosedAt" DueDate="@_ticket.DueDate" FollowupCount="_followups.Count" TaskCount="_tasks.Count" />
+                        break;
+
+                    case "couts":
+                        <ItemCostsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Ticket" ItemId="TicketId" />
+                        break;
+
                     case "elements":
                         <ItemAssetsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Ticket" ItemId="TicketId" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Ticket" />
                         break;

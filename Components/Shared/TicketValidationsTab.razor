@@ -1,0 +1,201 @@
+@using GlpiNg.Modules.Abstractions.Directory
+@using GlpiNg.Modules.Assistance.Models
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<DbContext> DbFactory
+@inject IServiceProvider Services
+@inject AuthenticationStateProvider AuthProvider
+
+@* Onglet « Validations » d'un ticket : demander l'avis d'un approbateur et lui laisser répondre. Seul l'approbateur
+   désigné répond ; un refus demande une raison ; une demande encore en attente peut être retirée. *@
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">@T("Approbateur")</label>
+                <select class="form-select" @bind="_validator">
+                    <option value="0">—</option>
+                    @foreach (PrincipalOption user in _users)
+                    {
+                        <option value="@user.Id">@user.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">@T("Commentaire de la demande")</label>
+                <input class="form-control" @bind="_requestComment" @bind:event="oninput" />
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-primary w-100" disabled="@(_validator == 0 || AlreadyWaiting)" @onclick="RequestAsync">
+                    <i class="ti ti-send me-1"></i>@T("Demander")
+                </button>
+            </div>
+        </div>
+        @if (AlreadyWaiting)
+        {
+            <p class="hint text-warning mt-2 mb-0">@T("Une approbation de cet utilisateur est déjà en attente.")</p>
+        }
+    </div>
+</div>
+
+@if (_validations.Count == 0)
+{
+    <div class="glping-config-placeholder">
+        <i class="ti ti-gavel"></i>
+        <p class="mb-0">@T("Aucune validation demandée.")</p>
+    </div>
+}
+else
+{
+    @foreach (TicketValidation validation in _validations)
+    {
+        <div class="card mb-2">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="fw-semibold"><i class="ti ti-user me-1"></i>@NameOf(validation.ValidatorUserId)</span>
+                        <span class="badge @(BadgeFor(validation.Status)) ms-2">@T(LabelFor(validation.Status))</span>
+                    </div>
+                    @if (validation.Status == ChangeValidationStatus.Waiting)
+                    {
+                        <button type="button" class="btn btn-icon btn-sm text-danger" title="@(T("Retirer la demande"))" @onclick="() => DeleteAsync(validation.Id)">
+                            <i class="ti ti-x"></i>
+                        </button>
+                    }
+                </div>
+                <div class="text-secondary small mt-1">
+                    @T("Demandée par {0} le {1}", validation.RequesterName ?? "?", Display.DateTime(validation.SubmittedAt))
+                </div>
+                @if (!string.IsNullOrWhiteSpace(validation.RequestComment))
+                {
+                    <div class="mt-2" style="white-space: pre-wrap;">@validation.RequestComment</div>
+                }
+                @if (validation.Status != ChangeValidationStatus.Waiting)
+                {
+                    <div class="mt-2 text-secondary" style="white-space: pre-wrap;">
+                        @(validation.ValidatedAt is { } at ? Display.DateTime(at) + " — " : "")@validation.ValidationComment
+                    </div>
+                }
+                else if (validation.ValidatorUserId == _currentUserId)
+                {
+                    <div class="mt-3">
+                        <textarea class="form-control mb-2" rows="2" placeholder="@(T("Votre réponse (obligatoire en cas de refus)"))"
+                                  @bind="_answer" @bind:event="oninput"></textarea>
+                        <button type="button" class="btn btn-success btn-sm me-2" @onclick="() => AnswerAsync(validation.Id, ChangeValidationStatus.Accepted)">
+                            <i class="ti ti-check me-1"></i>@T("Accepter")
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm" disabled="@string.IsNullOrWhiteSpace(_answer)"
+                                @onclick="() => AnswerAsync(validation.Id, ChangeValidationStatus.Refused)">
+                            <i class="ti ti-x me-1"></i>@T("Refuser")
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public int TicketId { get; set; }
+
+    private List<TicketValidation> _validations = [];
+    private List<PrincipalOption> _users = [];
+    private int _validator;
+    private int _currentUserId;
+    private string _currentUserName = "?";
+    private string _requestComment = string.Empty;
+    private string _answer = string.Empty;
+
+    private bool AlreadyWaiting => _validations.Exists(v => v.ValidatorUserId == _validator && v.Status == ChangeValidationStatus.Waiting);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Services.GetService(typeof(IPrincipalDirectory)) is IPrincipalDirectory directory)
+        {
+            _users = [.. await directory.GetAsync(PrincipalKind.User)];
+        }
+
+        AuthenticationState state = await AuthProvider.GetAuthenticationStateAsync();
+        _currentUserName = state.User.Identity?.Name ?? "?";
+        _ = int.TryParse(state.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out _currentUserId);
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        await using DbContext db = await DbFactory.CreateDbContextAsync();
+        _validations = await db.Set<TicketValidation>().AsNoTracking().Where(v => v.TicketId == TicketId).OrderByDescending(v => v.SubmittedAt).ToListAsync();
+    }
+
+    private string NameOf(int userId) => _users.FirstOrDefault(u => u.Id == userId)?.Name ?? $"#{userId}";
+
+    private static string LabelFor(ChangeValidationStatus status) => status switch
+    {
+        ChangeValidationStatus.Accepted => "Acceptée",
+        ChangeValidationStatus.Refused => "Refusée",
+        _ => "En attente",
+    };
+
+    private static string BadgeFor(ChangeValidationStatus status) => status switch
+    {
+        ChangeValidationStatus.Accepted => "bg-success-lt",
+        ChangeValidationStatus.Refused => "bg-danger-lt",
+        _ => "bg-warning-lt",
+    };
+
+    private async Task RequestAsync()
+    {
+        if (_validator == 0 || AlreadyWaiting)
+        {
+            return;
+        }
+
+        await using DbContext db = await DbFactory.CreateDbContextAsync();
+        db.Set<TicketValidation>().Add(new TicketValidation
+        {
+            TicketId = TicketId,
+            ValidatorUserId = _validator,
+            RequestComment = string.IsNullOrWhiteSpace(_requestComment) ? null : _requestComment.Trim(),
+            RequesterName = _currentUserName,
+        });
+        await db.SaveChangesAsync();
+
+        _validator = 0;
+        _requestComment = string.Empty;
+        await LoadAsync();
+    }
+
+    private async Task AnswerAsync(int id, ChangeValidationStatus answer)
+    {
+        if (answer == ChangeValidationStatus.Refused && string.IsNullOrWhiteSpace(_answer))
+        {
+            return;
+        }
+
+        await using DbContext db = await DbFactory.CreateDbContextAsync();
+        TicketValidation? validation = await db.Set<TicketValidation>().FirstOrDefaultAsync(v => v.Id == id);
+
+        // Seul l'approbateur désigné répond, et une seule fois.
+        if (validation is null || validation.ValidatorUserId != _currentUserId || validation.Status != ChangeValidationStatus.Waiting)
+        {
+            return;
+        }
+
+        validation.Status = answer;
+        validation.ValidationComment = string.IsNullOrWhiteSpace(_answer) ? null : _answer.Trim();
+        validation.ValidatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        _answer = string.Empty;
+        await LoadAsync();
+    }
+
+    private async Task DeleteAsync(int id)
+    {
+        await using DbContext db = await DbFactory.CreateDbContextAsync();
+        await db.Set<TicketValidation>().Where(v => v.Id == id && v.Status == ChangeValidationStatus.Waiting).ExecuteDeleteAsync();
+        await LoadAsync();
+    }
+}

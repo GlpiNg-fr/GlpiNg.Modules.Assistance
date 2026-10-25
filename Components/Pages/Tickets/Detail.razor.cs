@@ -81,6 +81,9 @@ public partial class Detail : ComponentBase
             yield return ("sla", "Niveaux de service", "ti-clipboard-check", null);
             yield return ("problemes", "Problèmes", "ti-bulb", _problems.Count);
             yield return ("changements", "Changements", "ti-replace", _changes.Count);
+            yield return ("validations", "Validations", "ti-gavel", null);
+            yield return ("statistiques", "Statistiques", "ti-chart-bar", null);
+            yield return ("couts", "Coûts", "ti-coin", null);
             yield return ("elements", "Éléments", "ti-device-desktop", null);
             yield return ("baseconnaissances", "Base de connaissances", "ti-book", null);
             yield return ("projets", "Projets", "ti-clipboard-list", null);
